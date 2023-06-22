@@ -1,0 +1,51 @@
+===============
+Unity generated
+===============
+Temp/
+Library/
+Build/
+Builds/
+obj/
+
+=====================================
+Visual Studio / MonoDevelop generated
+=====================================
+ExportedObj/
+.vs/
+/.userprefs
+/.csproj
+/.pidb
+/.suo
+/.sln
+/.user
+/.unityproj
+/.booproj
+
+============
+OS generated
+============
+.DS_Store
+.DSStore?
+.
+.Spotlight-V100
+.Trashes
+Icon?
+ehthumbs.db
+Thumbs.db
+
+============
+User specific
+============
+/[Ll]ogs/
+
+=====================================
+JetBrains Rider / ReSharper generated
+=====================================
+.idea/
+.sln.DotSettings.user
+
+=========
+Packages
+=========
+Uncomment this line if you wish to ignore the package cache files for your project
+#.unitypackage

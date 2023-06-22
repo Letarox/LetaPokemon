@@ -1,0 +1,4 @@
+repository "PokemonProject@Letarox@cloud"
+  path "/"
+    br "/main"
+    co "/main"
