@@ -1,0 +1,36 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 61f5797d743bf054e83a79be7b418c36, type: 3}
+  m_Name: Beedrill
+  m_EditorClassIdentifier: 
+  name: Beedrill
+  description: It uses sharp, poisonous stings to defeat prey, then takes the victim
+    back to its nest for food.
+  frontSprite: {fileID: 21300000, guid: fd9077a37a90f4f41bd780f8f5b5f62d, type: 3}
+  backSprite: {fileID: 21300000, guid: d5a3f40b3c451c24aad129175f5cd243, type: 3}
+  primaryType: 7
+  secondaryType: 4
+  ability: 3
+  maxHp: 65
+  attack: 90
+  defense: 40
+  spAttack: 45
+  spDefense: 80
+  speed: 75
+  struggle: {fileID: 11400000, guid: c16651c43988f0e488d365a371144c8d, type: 2}
+  learnableMoves:
+  - moveBase: {fileID: 11400000, guid: adeb3291ea9d71b48897b666e93a8abe, type: 2}
+    level: 1
+  - moveBase: {fileID: 11400000, guid: 217c5384ef2d9404aba7f2085735aeb6, type: 2}
+    level: 4
+  - moveBase: {fileID: 11400000, guid: c91ac78188ce67043b0ede9683904bd0, type: 2}
+    level: 7

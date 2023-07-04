@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public enum GameState { FreeRoam, InBattle }
+public enum GameState { FreeRoam, InBattle, Dialogue }
 
 public class GameManager : MonoBehaviour
 {
@@ -14,13 +14,42 @@ public class GameManager : MonoBehaviour
     void OnEnable()
     {
         _playerController.OnEncounter += StartBattle;
-        _battleSystem.OnBattleOver += EndBattle;
+        _battleSystem.OnBattleOver += EndBattle;        
     }
 
     void OnDisable()
     {
         _playerController.OnEncounter -= StartBattle;
         _battleSystem.OnBattleOver -= EndBattle;
+        DialogueManager.Instance.OnShowDialogue -= () =>
+        {
+            _state = GameState.Dialogue;
+        };
+        DialogueManager.Instance.OnCloseDialogue -= () =>
+        {
+            if (_state == GameState.Dialogue)
+                _state = GameState.FreeRoam;
+        };
+    }
+
+    void Start()
+    {
+        DialogueManager.Instance.OnShowDialogue += () =>
+        {
+            _state = GameState.Dialogue;
+        };
+        DialogueManager.Instance.OnCloseDialogue += () =>
+        {
+            if (_state == GameState.Dialogue)
+                _state = GameState.FreeRoam;
+        };
+    }
+
+    void Awake()
+    {
+        AbilityDB.Init();
+        ConditionDB.Init();
+        WeatherDB.Init();
     }
 
     void StartBattle()
@@ -30,10 +59,16 @@ public class GameManager : MonoBehaviour
         _worldCamera.gameObject.SetActive(false);
 
         PokemonParty playerParty = _playerController.GetComponent<PokemonParty>();
-        Pokemon wildPokemon = FindObjectOfType<MapArea>().GetComponent<MapArea>().GetRandomWildPokemon();
+        if (playerParty == null)
+            Debug.LogError("PokemonParty is NULL on " + transform.name);
+        MapArea mapArea = FindObjectOfType<MapArea>().GetComponent<MapArea>();
+        if(mapArea == null)
+            Debug.LogError("MapArea is NULL on " + transform.name);
+        Pokemon wildPokemon = mapArea.GetRandomWildPokemon();
+        Weather environmentWeather = WeatherDB.Weathers[mapArea.EnvironmentWeather];
 
-        if(playerParty != null && wildPokemon != null)
-            _battleSystem.StartBattle(playerParty, wildPokemon);
+        if (playerParty != null && wildPokemon != null)
+            _battleSystem.StartBattle(playerParty, wildPokemon, environmentWeather);
     }
 
     void EndBattle(bool hasWon)
@@ -45,13 +80,17 @@ public class GameManager : MonoBehaviour
 
     void Update()
     {
-        if(_state == GameState.FreeRoam)
+        switch (_state)
         {
-            _playerController.HandleUpdate();
-        }
-        else if(_state == GameState.InBattle)
-        {
-            _battleSystem.HandleUpdate();
+            case GameState.FreeRoam:
+                _playerController.HandleUpdate();
+                break;
+            case GameState.InBattle:
+                _battleSystem.HandleUpdate();
+                break;
+            case GameState.Dialogue:
+                DialogueManager.Instance.HandleUpdate();
+                break;
         }
     }
 }

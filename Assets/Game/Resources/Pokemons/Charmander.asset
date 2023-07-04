@@ -19,12 +19,14 @@ MonoBehaviour:
   backSprite: {fileID: 21300000, guid: ed8e1d9976a1fd94d961840d8f6e7764, type: 3}
   primaryType: 10
   secondaryType: 0
+  ability: 0
   maxHp: 39
   attack: 52
   defense: 43
   spAttack: 60
   spDefense: 50
   speed: 65
+  struggle: {fileID: 11400000, guid: c16651c43988f0e488d365a371144c8d, type: 2}
   learnableMoves:
   - moveBase: {fileID: 11400000, guid: 683ded06573c7c44789d22d13dc2f1e0, type: 2}
     level: 1
@@ -32,3 +34,5 @@ MonoBehaviour:
     level: 4
   - moveBase: {fileID: 11400000, guid: e204b8bc2f594504682683642621921c, type: 2}
     level: 7
+  - moveBase: {fileID: 11400000, guid: 45e8b962a7227244aaaa355679feda5f, type: 2}
+    level: 10

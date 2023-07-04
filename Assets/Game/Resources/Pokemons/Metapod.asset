@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 61f5797d743bf054e83a79be7b418c36, type: 3}
+  m_Name: Metapod
+  m_EditorClassIdentifier: 
+  name: Metapod
+  description: This is its preevolved form. At this stage, it can only harden, so
+    it remains motionless to avoid attack.
+  frontSprite: {fileID: 21300000, guid: 7838c2d6d3965d04e91302ecf0686264, type: 3}
+  backSprite: {fileID: 21300000, guid: 1688a002dbcf9294282ee63e3faa90fc, type: 3}
+  primaryType: 7
+  secondaryType: 0
+  ability: 4
+  maxHp: 50
+  attack: 20
+  defense: 55
+  spAttack: 25
+  spDefense: 25
+  speed: 30
+  struggle: {fileID: 11400000, guid: c16651c43988f0e488d365a371144c8d, type: 2}
+  learnableMoves:
+  - moveBase: {fileID: 11400000, guid: ec818183895dba6428f258151b585913, type: 2}
+    level: 1
+  - moveBase: {fileID: 11400000, guid: 217c5384ef2d9404aba7f2085735aeb6, type: 2}
+    level: 4

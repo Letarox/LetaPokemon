@@ -16,6 +16,12 @@ MonoBehaviour:
   description: Whips the foe with slender vines.
   type: 12
   category: 0
-  power: 35
+  power: 45
   accuracy: 100
-  pp: 15
+  pp: 25
+  effects:
+    boosts: []
+    status: 0
+    volatileStatus: 0
+  target: 0
+  secondaryEffects: []

@@ -5,6 +5,9 @@ using UnityEngine;
 public class MapArea : MonoBehaviour
 {
     [SerializeField] List<Pokemon> _wildPokemons;
+    [SerializeField] WeatherID _environmentWeather;
+
+    public WeatherID EnvironmentWeather { get { return _environmentWeather; } }
 
     public Pokemon GetRandomWildPokemon()
     {

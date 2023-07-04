@@ -71,6 +71,10 @@ public class BattleDialogueBox : MonoBehaviour
                 _moveTextList[i].color = Color.black;
         }
 
+        if (move.PP == 0)
+            _ppText.color = Color.red;
+        else
+            _ppText.color = Color.black;
         _ppText.text = $"PP: { move.PP }/{ move.Base.PP }";
         _typeText.text = move.Base.Type.ToString();
 

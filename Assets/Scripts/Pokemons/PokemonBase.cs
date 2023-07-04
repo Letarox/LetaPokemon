@@ -4,12 +4,13 @@ using UnityEngine;
 [CreateAssetMenu(fileName = "Pokemon", menuName = "Pokemon/Create new Pokemon")]
 public class PokemonBase : ScriptableObject
 {
-    [SerializeField] string name;
+    [SerializeField] new string name;
     [TextArea][SerializeField] string description;
     [SerializeField] Sprite frontSprite;
     [SerializeField] Sprite backSprite;
     [SerializeField] PokemonType primaryType;
     [SerializeField] PokemonType secondaryType;
+    [SerializeField] AbilityID ability;
 
     //Base Stats/Attributes
     [SerializeField] int maxHp;
@@ -19,6 +20,7 @@ public class PokemonBase : ScriptableObject
     [SerializeField] int spDefense;
     [SerializeField] int speed;
 
+    [SerializeField] MoveBase struggle;
     [SerializeField] List<LearnableMove> learnableMoves;
 
     public string Name { get { return name; } }
@@ -44,7 +46,9 @@ public class PokemonBase : ScriptableObject
     public int SpecialDefense { get { return spDefense; } }
 
     public int Speed { get { return speed; } }
+    public Ability Ability { get { return AbilityDB.Abilities[ability]; } }
     public List<LearnableMove> LearnableMoves { get { return learnableMoves; } }
+    public MoveBase Struggle { get { return struggle; } }
 }
 
 [System.Serializable]
@@ -65,7 +69,8 @@ public enum Stat
     SpDefense,
     Speed,
     Accuracy,
-    Evasion
+    Evasiveness,
+    Critical
 }
 
 
@@ -127,4 +132,29 @@ public class TypeChart
 
         return chart[row][col];
     }
+
+    //                                              NORMAL              FIGHTING            FLYING              POISON              GROUND              ROCK                BUG                 GHOST               STEEL               FIRE                WATER               GRASS               ELECTRIC            PSYCHIC             ICE                 DRAGON              DARK                FAIRY
+    static ConditionID[] conditionImmunity =    {   ConditionID.None,   ConditionID.None,   ConditionID.None,   ConditionID.PSN,    ConditionID.None,   ConditionID.None,   ConditionID.None,   ConditionID.None,   ConditionID.PSN,    ConditionID.None,   ConditionID.None,   ConditionID.None,   ConditionID.PAR,    ConditionID.None,   ConditionID.FRZ,    ConditionID.None,   ConditionID.None,   ConditionID.None };
+    public static ConditionID GetConditionImmunity(PokemonType defenseType)
+    {
+        if (defenseType == PokemonType.None)
+            return ConditionID.None;
+
+        int col = (int)defenseType - 1;
+
+        return conditionImmunity[col];
+    }
+
+    //                                              NORMAL          FIGHTING        FLYING          POISON          GROUND               ROCK                   BUG             GHOST           STEEL                   FIRE            WATER           GRASS           ELECTRIC        PSYCHIC         ICE             DRAGON          DARK            FAIRY
+    static WeatherID[] weathersImmunityChart =  {   WeatherID.None, WeatherID.None, WeatherID.None, WeatherID.None, WeatherID.Sandstorm, WeatherID.Sandstorm,   WeatherID.None, WeatherID.None, WeatherID.Sandstorm,    WeatherID.None, WeatherID.None, WeatherID.None, WeatherID.None, WeatherID.None, WeatherID.Hail, WeatherID.None, WeatherID.None, WeatherID.None};
+    public static WeatherID GetWeatherEffectiveness(PokemonType defenseType)
+    {
+        if (defenseType == PokemonType.None)
+            return WeatherID.None;
+
+        int col = (int)defenseType - 1;
+
+        return weathersImmunityChart[col];
+    }
 }
+    

@@ -57,20 +57,35 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Assets\Scripts\Battle\PartyMemberUI.cs" />
+    <Compile Include="Assets\Scripts\Gameplay\Dialogue.cs" />
+    <Compile Include="Assets\Scripts\Data\WeatherDB.cs" />
+    <Compile Include="Assets\Scripts\Character\Character.cs" />
+    <Compile Include="Assets\Scripts\Data\ConditionDB.cs" />
     <Compile Include="Assets\Scripts\Battle\BattleHud.cs" />
-    <Compile Include="Assets\Scripts\Player\PlayerController.cs" />
+    <Compile Include="Assets\Scripts\Character\PlayerController.cs" />
+    <Compile Include="Assets\Scripts\Character\CharacterAnimator.cs" />
+    <Compile Include="Assets\Scripts\Character\NPCController.cs" />
     <Compile Include="Assets\Scripts\Pokemons\Move.cs" />
+    <Compile Include="Assets\Scripts\Pokemons\Ability.cs" />
+    <Compile Include="Assets\Scripts\Gameplay\GameLayers.cs" />
+    <Compile Include="Assets\Scripts\Data\AbilityDB.cs" />
     <Compile Include="Assets\Scripts\Battle\BattleDialogueBox.cs" />
+    <Compile Include="Assets\Scripts\Battle\Weather.cs" />
     <Compile Include="Assets\Scripts\GameManager.cs" />
     <Compile Include="Assets\Scripts\Pokemons\MoveBase.cs" />
     <Compile Include="Assets\Scripts\Pokemons\PokemonBase.cs" />
     <Compile Include="Assets\Scripts\Battle\HPBar.cs" />
     <Compile Include="Assets\Scripts\Gameplay\MapArea.cs" />
     <Compile Include="Assets\Scripts\Pokemons\Pokemon.cs" />
+    <Compile Include="Assets\Scripts\MonoSingleton.cs" />
     <Compile Include="Assets\Scripts\Battle\BattleUnit.cs" />
     <Compile Include="Assets\Scripts\Battle\PartyScreen.cs" />
+    <Compile Include="Assets\Scripts\Gameplay\Interactable.cs" />
     <Compile Include="Assets\Scripts\Battle\BattleSystem.cs" />
     <Compile Include="Assets\Scripts\Pokemons\PokemonParty.cs" />
+    <Compile Include="Assets\Scripts\Util\SpriteAnimator.cs" />
+    <Compile Include="Assets\Scripts\Pokemons\Condition.cs" />
+    <Compile Include="Assets\Scripts\Gameplay\DialogueManager.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\TextMesh Pro\Shaders\TMPro.cginc" />

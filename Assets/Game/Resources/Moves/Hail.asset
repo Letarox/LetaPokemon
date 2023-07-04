@@ -1,0 +1,37 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f3fd455580c915347a65b1a45494dea9, type: 3}
+  m_Name: Hail
+  m_EditorClassIdentifier: 
+  name: Hail
+  description: "A hailstorm lasting five turns damages all Pok\xE9mon except the
+    Ice-type."
+  type: 15
+  category: 2
+  target: 1
+  power: 0
+  accuracy: 100
+  pp: 10
+  priority: 0
+  recoil: 0
+  makesContact: 0
+  bypassAccuracy: 0
+  twoTurnMove: 0
+  mustRecharge: 0
+  hpDrainingMove: 0
+  onCastMessage: 
+  effects:
+    boosts: []
+    status: 0
+    volatileStatus: 0
+    weatherEffect: 4
+  secondaryEffects: []

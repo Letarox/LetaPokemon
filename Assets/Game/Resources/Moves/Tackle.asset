@@ -16,6 +16,21 @@ MonoBehaviour:
   description: A full-body charge attack.
   type: 1
   category: 0
-  power: 35
+  target: 0
+  power: 40
   accuracy: 95
   pp: 35
+  priority: 0
+  recoil: 0
+  makesContact: 1
+  bypassAccuracy: 0
+  twoTurnMove: 0
+  mustRecharge: 0
+  hpDrainingMove: 0
+  onCastMessage: 
+  effects:
+    boosts: []
+    status: 0
+    volatileStatus: 0
+    weatherEffect: 0
+  secondaryEffects: []

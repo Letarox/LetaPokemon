@@ -19,7 +19,13 @@ public class PartyScreen : MonoBehaviour
         for (int i = 0; i < _memberSlots.Count; i++)
         {
             if (i < pokemons.Count)
+            {
                 _memberSlots[i].SetData(pokemons[i]);
+                if(pokemons[i].HP >=1)
+                    _memberSlots[i].SetStatusImage(pokemons[i].Status);
+                else
+                    _memberSlots[i].SetFaintImage();
+            }                
             else
                 _memberSlots[i].gameObject.SetActive(false);
         }
@@ -29,7 +35,7 @@ public class PartyScreen : MonoBehaviour
 
     public void UpdatePokemonSelection(int selectedPokemon)
     {
-        for (int i = 0; i < _memberSlots.Count - 1; i++)
+        for (int i = 0; i < _memberSlots.Count; i++)
         {
             if (i == selectedPokemon)
                 _memberImages[i].color = Color.cyan;

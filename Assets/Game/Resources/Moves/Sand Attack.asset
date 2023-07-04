@@ -19,8 +19,13 @@ MonoBehaviour:
   power: 0
   accuracy: 100
   pp: 15
+  makesContact: 0
+  bypassAccuracyCheck: 0
   effects:
     boosts:
     - stat: 5
       boost: -1
+    status: 0
+    volatileStatus: 0
   target: 0
+  secondaryEffects: []
