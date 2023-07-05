@@ -13,7 +13,9 @@ MonoBehaviour:
   m_Name: Sandstorm
   m_EditorClassIdentifier: 
   name: Sandstorm
-  description: Inflicts damage every turn.
+  description: "A five-turn sandstorm is summoned to damage all Pok\xE9mon except
+    Rock, Ground, and Steel types. The sandstorm also boosts the Sp. Def stats of
+    Rock types."
   type: 6
   category: 2
   target: 1
@@ -33,4 +35,5 @@ MonoBehaviour:
     status: 0
     volatileStatus: 0
     weatherEffect: 3
+    screenType: 0
   secondaryEffects: []

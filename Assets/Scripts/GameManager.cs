@@ -6,7 +6,7 @@ public enum GameState { FreeRoam, InBattle, Dialogue }
 
 public class GameManager : MonoBehaviour
 {
-    GameState _state;
+    public static GameState gameState;
     [SerializeField] PlayerController _playerController;
     [SerializeField] BattleSystem _battleSystem;
     [SerializeField] Camera _worldCamera;
@@ -23,12 +23,12 @@ public class GameManager : MonoBehaviour
         _battleSystem.OnBattleOver -= EndBattle;
         DialogueManager.Instance.OnShowDialogue -= () =>
         {
-            _state = GameState.Dialogue;
+            gameState = GameState.Dialogue;
         };
         DialogueManager.Instance.OnCloseDialogue -= () =>
         {
-            if (_state == GameState.Dialogue)
-                _state = GameState.FreeRoam;
+            if (gameState == GameState.Dialogue)
+                gameState = GameState.FreeRoam;
         };
     }
 
@@ -36,12 +36,12 @@ public class GameManager : MonoBehaviour
     {
         DialogueManager.Instance.OnShowDialogue += () =>
         {
-            _state = GameState.Dialogue;
+            gameState = GameState.Dialogue;
         };
         DialogueManager.Instance.OnCloseDialogue += () =>
         {
-            if (_state == GameState.Dialogue)
-                _state = GameState.FreeRoam;
+            if (gameState == GameState.Dialogue)
+                gameState = GameState.FreeRoam;
         };
     }
 
@@ -49,12 +49,13 @@ public class GameManager : MonoBehaviour
     {
         AbilityDB.Init();
         ConditionDB.Init();
+        ScreenDB.Init();
         WeatherDB.Init();
     }
 
     void StartBattle()
     {
-        _state = GameState.InBattle;
+        gameState = GameState.InBattle;
         _battleSystem.gameObject.SetActive(true);
         _worldCamera.gameObject.SetActive(false);
 
@@ -73,14 +74,14 @@ public class GameManager : MonoBehaviour
 
     void EndBattle(bool hasWon)
     {
-        _state = GameState.FreeRoam;
+        gameState = GameState.FreeRoam;
         _battleSystem.gameObject.SetActive(false);
         _worldCamera.gameObject.SetActive(true);
     }
 
     void Update()
     {
-        switch (_state)
+        switch (gameState)
         {
             case GameState.FreeRoam:
                 _playerController.HandleUpdate();

@@ -13,7 +13,8 @@ MonoBehaviour:
   m_Name: Rain Dance
   m_EditorClassIdentifier: 
   name: Rain Dance
-  description: Boosts water-type moves for 5 turns.
+  description: The user summons a heavy rain that falls for five turns, powering
+    up Water-type attacks. The rain also lowers the power of Fire-type attacks.
   type: 11
   category: 2
   target: 1
@@ -33,4 +34,5 @@ MonoBehaviour:
     status: 0
     volatileStatus: 0
     weatherEffect: 2
+    screenType: 0
   secondaryEffects: []

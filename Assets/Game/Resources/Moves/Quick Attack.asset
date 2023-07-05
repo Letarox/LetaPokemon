@@ -13,7 +13,8 @@ MonoBehaviour:
   m_Name: Quick Attack
   m_EditorClassIdentifier: 
   name: Quick Attack
-  description: Lets the user get in the first hit.
+  description: The user lunges at the target to inflict damage, moving at blinding
+    speed. This move always goes first.
   type: 1
   category: 0
   target: 0
@@ -33,4 +34,5 @@ MonoBehaviour:
     status: 0
     volatileStatus: 0
     weatherEffect: 0
+    screenType: 0
   secondaryEffects: []

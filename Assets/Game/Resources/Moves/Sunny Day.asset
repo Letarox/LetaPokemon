@@ -13,7 +13,8 @@ MonoBehaviour:
   m_Name: Sunny Day
   m_EditorClassIdentifier: 
   name: Sunny Day
-  description: Boosts fire-type moves for 5 turns.
+  description: The user intensifies the sun for five turns, powering up Fire-type
+    attacks. The sunlight also lowers the power of Water-type attacks.
   type: 10
   category: 2
   target: 1
@@ -33,4 +34,5 @@ MonoBehaviour:
     status: 0
     volatileStatus: 0
     weatherEffect: 1
+    screenType: 0
   secondaryEffects: []

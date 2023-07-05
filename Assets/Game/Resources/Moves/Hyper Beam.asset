@@ -13,9 +13,8 @@ MonoBehaviour:
   m_Name: Hyper Beam
   m_EditorClassIdentifier: 
   name: Hyper Beam
-  description: '1st turn: Attack
-
-    2nd turn: Rest'
+  description: The target is attacked with a powerful beam. The user can't move on
+    the next turn.
   type: 1
   category: 1
   target: 0
@@ -23,14 +22,17 @@ MonoBehaviour:
   accuracy: 90
   pp: 5
   priority: 0
+  recoil: 0
   makesContact: 0
-  bypassAccuracyCheck: 0
+  bypassAccuracy: 0
   twoTurnMove: 0
   mustRecharge: 1
+  hpDrainingMove: 0
   onCastMessage: must recharge!
   effects:
     boosts: []
     status: 0
     volatileStatus: 0
     weatherEffect: 0
+    screenType: 0
   secondaryEffects: []

@@ -31,7 +31,10 @@ public class NPCController : MonoBehaviour, Interactable
         if (DialogueManager.Instance.IsShowingDialogue) 
             return;
 
-        if(_state == NPCState.Idle)
+        if (GameManager.gameState != GameState.FreeRoam)
+            return;
+
+        if (_state == NPCState.Idle)
         {
             _idleTimer += Time.deltaTime;
             if(_idleTimer > _timeBetweenPatterns)

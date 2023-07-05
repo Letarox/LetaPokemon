@@ -11,7 +11,8 @@ public class MoveBase : ScriptableObject
     [TextArea] [SerializeField] string description;
     [SerializeField] PokemonType type;
     [SerializeField] MoveCategory category;
-    [SerializeField] MoveTarget target;    
+    [SerializeField] MoveVariation variation;
+    [SerializeField] MoveTarget target;
     [SerializeField] int power;
     [SerializeField] int accuracy;
     [SerializeField] int pp;
@@ -30,6 +31,7 @@ public class MoveBase : ScriptableObject
     public string Description { get { return description; } }
     public PokemonType Type { get { return type; } }
     public MoveCategory Category { get { return category; } }
+    public MoveVariation Variation { get { return variation; } }
     public MoveTarget Target { get { return target; } }    
     public int Power { get { return power; } }
     public int Accuracy { get { return accuracy; } }
@@ -48,6 +50,7 @@ public class MoveBase : ScriptableObject
 }
 
 public enum MoveCategory { Physical, Special, Status }
+public enum MoveVariation { None, Slicing, Punch, Spore, Claw }
 public enum MoveTarget { Foe, Self }
 
 [System.Serializable]
@@ -57,11 +60,13 @@ public class MoveEffects
     [SerializeField] ConditionID status;
     [SerializeField] ConditionID volatileStatus;
     [SerializeField] WeatherID weatherEffect;
+    [SerializeField] ScreenType screenType;
 
     public List<StatBoost> Boosts { get { return boosts; } }
     public ConditionID Status { get { return status; } }
     public ConditionID VolatileStatus { get { return volatileStatus; } }
     public WeatherID WeatherEffect { get { return weatherEffect; } }
+    public ScreenType ScreenType { get { return screenType; } }
 }
 
 [System.Serializable]

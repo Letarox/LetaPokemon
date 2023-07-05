@@ -60,9 +60,11 @@
     <Compile Include="Assets\Scripts\Gameplay\Dialogue.cs" />
     <Compile Include="Assets\Scripts\Data\WeatherDB.cs" />
     <Compile Include="Assets\Scripts\Character\Character.cs" />
+    <Compile Include="Assets\Scripts\Battle\Screen.cs" />
     <Compile Include="Assets\Scripts\Data\ConditionDB.cs" />
     <Compile Include="Assets\Scripts\Battle\BattleHud.cs" />
     <Compile Include="Assets\Scripts\Character\PlayerController.cs" />
+    <Compile Include="Assets\Scripts\Battle\BattleAbilityBox.cs" />
     <Compile Include="Assets\Scripts\Character\CharacterAnimator.cs" />
     <Compile Include="Assets\Scripts\Character\NPCController.cs" />
     <Compile Include="Assets\Scripts\Pokemons\Move.cs" />
@@ -84,6 +86,7 @@
     <Compile Include="Assets\Scripts\Battle\BattleSystem.cs" />
     <Compile Include="Assets\Scripts\Pokemons\PokemonParty.cs" />
     <Compile Include="Assets\Scripts\Util\SpriteAnimator.cs" />
+    <Compile Include="Assets\Scripts\Data\ScreenDB.cs" />
     <Compile Include="Assets\Scripts\Pokemons\Condition.cs" />
     <Compile Include="Assets\Scripts\Gameplay\DialogueManager.cs" />
   </ItemGroup>

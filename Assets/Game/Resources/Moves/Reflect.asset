@@ -10,15 +10,17 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f3fd455580c915347a65b1a45494dea9, type: 3}
-  m_Name: Thunder Shock
+  m_Name: Reflect
   m_EditorClassIdentifier: 
-  name: Thunder Shock
-  description: The user attacks the target with a jolt of electricity. This may also
-    leave the target with paralysis.
-  type: 13
-  category: 1
-  target: 0
-  power: 40
+  name: Reflect
+  description: 'A wondrous wall of light is put up to reduce damage from physical
+    moves for five turns.
+
+'
+  type: 14
+  category: 2
+  target: 1
+  power: 0
   accuracy: 100
   pp: 30
   priority: 0
@@ -34,12 +36,5 @@ MonoBehaviour:
     status: 0
     volatileStatus: 0
     weatherEffect: 0
-    screenType: 0
-  secondaryEffects:
-  - boosts: []
-    status: 3
-    volatileStatus: 0
-    weatherEffect: 0
-    screenType: 0
-    procChance: 10
-    target: 0
+    screenType: 2
+  secondaryEffects: []

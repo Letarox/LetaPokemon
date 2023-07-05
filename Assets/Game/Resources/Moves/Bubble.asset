@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Bubble
   m_EditorClassIdentifier: 
   name: Bubble
-  description: An attack that may reduce Speed.
+  description: The user attacks the target with a spray of countless bubbles.
   type: 11
   category: 1
   target: 0
@@ -33,6 +33,7 @@ MonoBehaviour:
     status: 0
     volatileStatus: 0
     weatherEffect: 0
+    screenType: 0
   secondaryEffects:
   - boosts:
     - stat: 4
@@ -40,5 +41,6 @@ MonoBehaviour:
     status: 0
     volatileStatus: 0
     weatherEffect: 0
+    screenType: 0
     procChance: 10
     target: 0

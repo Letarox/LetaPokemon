@@ -108,9 +108,9 @@ public class AbilityDB
             new Ability()
             {
                 Name = "Keen Eye",
-                OnStatsChange = (Stat stat, int boost, Pokemon pokemon) =>
+                OnStatsChange = (StatBoost statBoost, Pokemon pokemon) =>
                 {
-                    if(stat == Stat.Accuracy && boost < 0)
+                    if(statBoost.stat == Stat.Accuracy && statBoost.boost < 0)
                     {
                         pokemon.StatusChanges.Enqueue("Keen Eye prevents the loss of accuracy!");
                         return false;
@@ -139,6 +139,29 @@ public class AbilityDB
             {
                 Name = "Overcoat"
             }
+        },
+        {
+            AbilityID.Intimidate,
+            new Ability()
+            {
+                Name = "Intimidate",
+                OnPokemonSwitch = (Pokemon pokemon) =>
+                {
+                    StatBoost intimidate = new StatBoost{
+                        stat = Stat.Attack,
+                        boost = -1
+                    };
+                    
+                    if(pokemon.CanReceiveBoost(intimidate, pokemon))
+                    {
+                        pokemon.ApplyBoost(intimidate);
+                    }
+                    else
+                    {
+                        pokemon.StatusChanges.Enqueue($"{ pokemon.Base.Name } cannot have its Attack reduced!");
+                    }
+                }
+            }
         }
     };
 }
@@ -153,5 +176,6 @@ public enum AbilityID
     Static,
     KeenEye,
     Guts,
-    Overcoat
+    Overcoat,
+    Intimidate
 }

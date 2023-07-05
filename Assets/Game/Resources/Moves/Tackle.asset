@@ -13,7 +13,8 @@ MonoBehaviour:
   m_Name: Tackle
   m_EditorClassIdentifier: 
   name: Tackle
-  description: A full-body charge attack.
+  description: A physical attack in which the user charges and slams into the target
+    with its whole body.
   type: 1
   category: 0
   target: 0
@@ -33,4 +34,5 @@ MonoBehaviour:
     status: 0
     volatileStatus: 0
     weatherEffect: 0
+    screenType: 0
   secondaryEffects: []

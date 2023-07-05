@@ -5,22 +5,16 @@ using UnityEngine;
 
 public enum BattleState { Start, ActionSelection, MoveSelection, PartyScreen, RunningTurn, Busy, BattleOver }
 public enum BattleAction { Move, SwitchPokemon, UseItem, Run }
-public enum Screen { None, LightScreen, Reflect, AuroraVeil }
 public class Team
 {
-    BattleUnit _currentBattleUnit;
-    List<Screen> _screenList;
-    bool _isPlayerTeam;
-    public BattleUnit CurrentBattleUnit { get; set; }
-    public List<Screen> ScreenList { get; set; }
-    public bool IsPlayerTeam { get; set; }
-
+    List<Screen> _screenList = new List<Screen>();
+    public List<Screen> TeamScreens { get { return _screenList; } set { } }
 }
-
 public class BattleSystem : MonoBehaviour
 {
     [SerializeField] BattleUnit _playerUnit, _enemyUnit;
     [SerializeField] BattleDialogueBox _dialogueBox;
+    [SerializeField] BattleAbilityBox _abilityBox;
     [SerializeField] PartyScreen _partyScreen;
     [SerializeField] SpriteRenderer _weatherImage;
     [SerializeField] List<Sprite> _weathers;
@@ -39,8 +33,8 @@ public class BattleSystem : MonoBehaviour
 
     PokemonParty _playerParty;
     Pokemon _wildPokemon;
-    Team _playerTeam;
-    Team _enemyTeam;
+    Team _playerTeam = new Team();
+    Team _enemyTeam = new Team();
 
     void Start()
     {
@@ -87,12 +81,8 @@ public class BattleSystem : MonoBehaviour
     public IEnumerator SetupBattle()
     {
         //Set the values for both player and enemy pokemons
-        _playerUnit.Setup(_playerParty.GetHealthyPokemon());
-        _playerTeam.CurrentBattleUnit = _playerUnit;
-        _playerTeam.IsPlayerTeam = true;
+        _playerUnit.Setup(_playerParty.GetHealthyPokemon());        
         _enemyUnit.Setup(_wildPokemon);
-        _enemyTeam.CurrentBattleUnit = _enemyUnit;
-        _enemyTeam.IsPlayerTeam = false;
 
         _dialogueBox.SetMoveNames(_playerUnit.Pokemon.Moves);      
 
@@ -100,6 +90,9 @@ public class BattleSystem : MonoBehaviour
         if (_currentWeather != WeatherDB.Weathers[WeatherID.None])
             yield return _dialogueBox.TypeDialogue($"{ _currentWeather.StartMessage }");
         yield return _faintDelay;
+
+        yield return PokemonSwitchAbility(_playerUnit.Pokemon, _enemyUnit.Pokemon);
+        yield return PokemonSwitchAbility(_enemyUnit.Pokemon, _playerUnit.Pokemon);        
 
         ActionSelection();
     }
@@ -280,7 +273,21 @@ public class BattleSystem : MonoBehaviour
         yield return _dialogueBox.TypeDialogue($"Go { newPokemon.Base.Name }!");
         yield return _faintDelay;
 
+        yield return PokemonSwitchAbility(_playerUnit.Pokemon, _enemyUnit.Pokemon);
+
         _state = BattleState.RunningTurn;
+    }
+    IEnumerator PokemonSwitchAbility(Pokemon source, Pokemon target)
+    {
+        if (source.OnPokemonSwitch(target))
+        {
+            _abilityBox.PlayAbilityEnterAnimation(source.Base.Ability.Name);
+            yield return _faintDelay;
+            yield return ShowStatusChanges(target);
+            yield return _attackDelay;
+            _abilityBox.PlayAbilityExitAnimation();
+        }
+        yield break;
     }
     bool CheckFirstTurn(Pokemon playerPokemon, Move playerMove, Pokemon enemyPokemon, Move enemyMove)
     {
@@ -303,55 +310,53 @@ public class BattleSystem : MonoBehaviour
     {
         _state = BattleState.RunningTurn;
 
-        if(playerAction == BattleAction.Move)
+        switch (playerAction)
         {
-            //We grab a handle of each move chosen by both the player and the enemy
-            if (!_playerUnit.Pokemon.TwoTurnMove || !_playerUnit.Pokemon.MustRecharge)
-                _playerUnit.Pokemon.CurrentMove = _playerUnit.Pokemon.Moves[_currentMove];
-            if (!_enemyUnit.Pokemon.TwoTurnMove || !_enemyUnit.Pokemon.MustRecharge)
-                _enemyUnit.Pokemon.CurrentMove = _enemyUnit.Pokemon.GetRandomMove();
+            case BattleAction.Move:
+                //We grab a handle of each move chosen by both the player and the enemy
+                if (!_playerUnit.Pokemon.TwoTurnMove || !_playerUnit.Pokemon.MustRecharge)
+                    _playerUnit.Pokemon.CurrentMove = _playerUnit.Pokemon.Moves[_currentMove];
+                if (!_enemyUnit.Pokemon.TwoTurnMove || !_enemyUnit.Pokemon.MustRecharge)
+                    _enemyUnit.Pokemon.CurrentMove = _enemyUnit.Pokemon.GetRandomMove();
 
-            //We check who goes first based on speed. In case of a speed-tie, we randomize who goes first. Then a handle of each unit is also set
-            bool playerFirst = CheckFirstTurn(_playerUnit.Pokemon, _playerUnit.Pokemon.CurrentMove, _enemyUnit.Pokemon, _enemyUnit.Pokemon.CurrentMove);
-            BattleUnit firstUnit = (playerFirst) ? _playerUnit : _enemyUnit;
-            BattleUnit secondUnit = (!playerFirst) ? _playerUnit : _enemyUnit;
-            Pokemon secondPokemon = secondUnit.Pokemon;
+                //We check who goes first based on speed. In case of a speed-tie, we randomize who goes first. Then a handle of each unit is also set
+                bool playerFirst = CheckFirstTurn(_playerUnit.Pokemon, _playerUnit.Pokemon.CurrentMove, _enemyUnit.Pokemon, _enemyUnit.Pokemon.CurrentMove);
+                BattleUnit firstUnit = (playerFirst) ? _playerUnit : _enemyUnit;
+                BattleUnit secondUnit = (!playerFirst) ? _playerUnit : _enemyUnit;
+                Pokemon secondPokemon = secondUnit.Pokemon;
 
-            //We run the move for the First Unit
-            yield return RunMove(firstUnit, secondUnit, firstUnit.Pokemon.CurrentMove);
-            if (_state == BattleState.BattleOver)
-                yield break;
-
-            yield return _waitUntilRunningTurn;
-
-            //If the second unit did not die to the move, we proceed with its own selection. In case of a switch in pokemon, this will be skiped 
-            if (secondPokemon.HP > 0)
-            {
-                yield return RunMove(secondUnit, firstUnit, secondUnit.Pokemon.CurrentMove);
+                //We run the move for the First Unit
+                yield return RunMove(firstUnit, secondUnit, firstUnit.Pokemon.CurrentMove);
                 if (_state == BattleState.BattleOver)
                     yield break;
-            }
 
-            //After both moves are executed, we run the AfterTurn in order of speed
-            yield return RunAfterTurn(firstUnit);
-            yield return RunAfterTurn(secondUnit);
-            if (_currentWeather != WeatherDB.Weathers[WeatherID.None])
-                yield return RunWeatherAfterTurn(firstUnit, secondUnit);
+                yield return _waitUntilRunningTurn;
 
-            //If this did not result in the end of battle, we reset the turn, allowing the player to chose a new action
-            if (_state != BattleState.BattleOver)
-                if (_playerUnit.Pokemon.TwoTurnMove || _playerUnit.Pokemon.MustRecharge)
+                //If the second unit did not die to the move, we proceed with its own selection. In case of a switch in pokemon, this will be skiped 
+                if (secondPokemon.HP > 0)
                 {
-                    yield return _attackDelay;
-                    StartCoroutine(RunTurns(BattleAction.Move));
+                    yield return RunMove(secondUnit, firstUnit, secondUnit.Pokemon.CurrentMove);
+                    if (_state == BattleState.BattleOver)
+                        yield break;
                 }
-                else
-                    ActionSelection();
-        }
-        else
-        {
-            if(playerAction == BattleAction.SwitchPokemon)
-            {
+
+                //After both moves are executed, we run the AfterTurn in order of speed
+                yield return RunAfterTurn(firstUnit);
+                yield return RunAfterTurn(secondUnit);
+                if (_currentWeather != WeatherDB.Weathers[WeatherID.None])
+                    yield return RunEffectsAfterTurn(firstUnit, secondUnit);
+
+                //If this did not result in the end of battle, we reset the turn, allowing the player to chose a new action
+                if (_state != BattleState.BattleOver)
+                    if (_playerUnit.Pokemon.TwoTurnMove || _playerUnit.Pokemon.MustRecharge)
+                    {
+                        yield return _attackDelay;
+                        StartCoroutine(RunTurns(BattleAction.Move));
+                    }
+                    else
+                        ActionSelection();
+                break;
+            case BattleAction.SwitchPokemon:
                 //We grab a handle of which pokemon was selected, change the state to prevent the player from acting any further, and apply the switch
                 Pokemon selectedMember = _playerParty.Pokemons[_currentMember];
                 _state = BattleState.Busy;
@@ -372,20 +377,20 @@ public class BattleSystem : MonoBehaviour
                     yield return RunAfterTurn(_enemyUnit);
                     yield return RunAfterTurn(_playerUnit);
                     if (_currentWeather != WeatherDB.Weathers[WeatherID.None])
-                        yield return RunWeatherAfterTurn(_enemyUnit, _playerUnit);
+                        yield return RunEffectsAfterTurn(_enemyUnit, _playerUnit);
                 }
                 else
                 {
                     yield return RunAfterTurn(_playerUnit);
                     yield return RunAfterTurn(_enemyUnit);
                     if (_currentWeather != WeatherDB.Weathers[WeatherID.None])
-                        yield return RunWeatherAfterTurn(_playerUnit, _enemyUnit);
+                        yield return RunEffectsAfterTurn(_playerUnit, _enemyUnit);
                 }
 
                 //If this did not result in the end of battle, we reset the turn, allowing the player to chose a new action
                 if (_state != BattleState.BattleOver)
                     ActionSelection();
-            }
+                break;
         }
     }
 
@@ -403,11 +408,14 @@ public class BattleSystem : MonoBehaviour
     }
     bool AccuracyCheck(Move move, Pokemon source, Pokemon target)
     {
+        //check if the move is being used on self
+        if (move.Base.Category == MoveCategory.Status && move.Base.Target == MoveTarget.Self)
+            return true;
         //check if the target is currently using Dig/Fly
         if (target.TwoTurnMove)
-            return false;
-        //check if the move is being used on self, or if the move bypasses accuracy to always hit
-        if ((move.Base.Category == MoveCategory.Status && move.Base.Target == MoveTarget.Self) || move.Base.BypassAccuracy)
+            return false;        
+        //check if the move should always hit
+        if (move.Base.BypassAccuracy)
             return true;
         //Generates a random float number between 1 and 100, multiplying by the accuracy of the move and accuracy of the pokemon, applying the stat changes.
         //Clamps the accuracy to at least 33% of the move accuracy, and maximum of 3x its accuracy
@@ -415,13 +423,23 @@ public class BattleSystem : MonoBehaviour
     }
     bool TargetIsImmune(Pokemon pokemon, Move move)
     {
+        //check if the target isn't a grass pokemon being afflicted by a spore move
+        if (move.Base.Variation == MoveVariation.Spore && (pokemon.Base.PrimaryType == PokemonType.Grass || pokemon.Base.SecondaryType == PokemonType.Grass))
+            return true;
+
         return (TypeChart.GetEffectiveness(move.Base.Type, pokemon.Base.PrimaryType) * TypeChart.GetEffectiveness(move.Base.Type, pokemon.Base.SecondaryType) == 0f) ? true : false;
     }
     IEnumerator RunMove(BattleUnit sourceUnit, BattleUnit targetUnit, Move move) 
     {
         _state = BattleState.RunningTurn;
         //check if the pokemon can act that turn before the move is called. In case it can't, it shows its dialogue updates and if it died due to confusion
-        yield return OnBeforeMove(sourceUnit);
+        if (!sourceUnit.Pokemon.OnBeforeMove())
+        {
+            yield return ShowStatusChanges(sourceUnit.Pokemon);
+            yield return sourceUnit.Hud.UpdateLoseHP();
+            yield return CheckForFaint(sourceUnit);
+            yield break;
+        }
 
         //check if the target has its MustRecharge set to true, therefore recharging and cancelling his turn after the message is displayed
         if (sourceUnit.Pokemon.MustRecharge)
@@ -448,8 +466,13 @@ public class BattleSystem : MonoBehaviour
         if (AccuracyCheck(move, sourceUnit.Pokemon, targetUnit.Pokemon))
         {
             //if the move is Dig/Fly we play its animation and cancel the turn. If second turn, we check if the target can be damaged, and if it can, deals normal damage
-            if (move.Base.TwoTurnMove)
-                yield return TwoTurnMoves(sourceUnit, targetUnit, move);            
+            if (move.Base.TwoTurnMove && !sourceUnit.Pokemon.TwoTurnMove)
+            {
+                sourceUnit.Pokemon.TwoTurnMove = true;
+                sourceUnit.PlayTwoTurnAnimation(true);
+                yield return _attackDelay;
+                yield break;
+            }
 
             //if the target is immune to the move type, returns the dialogue and ends the move
             if (TargetIsImmune(targetUnit.Pokemon, move))
@@ -458,13 +481,17 @@ public class BattleSystem : MonoBehaviour
                 yield break;
             }
 
-            sourceUnit.PlayAttackAnimation();
+            //apply attack animation and delay
+            if(move.Base.TwoTurnMove)
+                sourceUnit.PlayTwoTurnAnimation(false);
+            else
+                sourceUnit.PlayAttackAnimation();
             yield return _attackDelay;
 
             //check which type of move is being used
             if(move.Base.Category == MoveCategory.Status)
             {
-                yield return RunMoveEffects(move.Base.Effects, move.Base.Target, sourceUnit.Pokemon, targetUnit.Pokemon, false);
+                yield return RunMoveEffects(move.Base.Effects, move.Base.Target, sourceUnit, targetUnit.Pokemon, false);
             }
             else
             {
@@ -474,6 +501,10 @@ public class BattleSystem : MonoBehaviour
                 //Set the MustRecharge to true in case of a rechargable move
                 if (move.Base.MustRecharge)
                     sourceUnit.Pokemon.MustRecharge = true;
+
+                //if its Dig/Fly sort of move, remove them from their invulnerability
+                if (move.Base.TwoTurnMove)
+                    sourceUnit.Pokemon.TwoTurnMove = false;
             }
 
             //checks if the move used has secondary effects and the target survived the damage dealt. Apply all secondary effects from the move
@@ -483,7 +514,7 @@ public class BattleSystem : MonoBehaviour
                 {
                     if(UnityEngine.Random.Range(1,101) <= secondary.ProcChance)
                     {
-                        yield return RunMoveEffects(secondary, secondary.Target, sourceUnit.Pokemon, targetUnit.Pokemon, true);
+                        yield return RunMoveEffects(secondary, secondary.Target, sourceUnit, targetUnit.Pokemon, true);
                     }
                 }
             }
@@ -495,12 +526,12 @@ public class BattleSystem : MonoBehaviour
             yield return _attackDelay;
         }
     }
-    IEnumerator RunMoveEffects(MoveEffects effects, MoveTarget moveTarget, Pokemon source, Pokemon target, bool secondaryEffect)
+    IEnumerator RunMoveEffects(MoveEffects effects, MoveTarget moveTarget, BattleUnit sourceUnit, Pokemon target, bool secondaryEffect)
     {
         //Apply the Stat Boosting as long its not null. Check if the target can receive the specific boost based on his abilities
         if (effects.Boosts != null)
         {
-            yield return ApplyBoostEffects(effects, moveTarget, source, target);
+            yield return ApplyBoostEffects(effects, moveTarget, sourceUnit.Pokemon, target);
         }
 
         //Apply the Status Condition as long as its not NONE, check if the target can receive it before applying it and return its dialogue.
@@ -520,56 +551,26 @@ public class BattleSystem : MonoBehaviour
                 yield return _dialogueBox.TypeDialogue("But it failed!");
         }
 
+        //Run the weather effects and apply any effects as applicabe
         if (effects.WeatherEffect != WeatherID.None)
         {
             yield return WeatherMove(effects);
         }
 
-        //Display message for both Pokemon according to their Status
-        yield return DisplayMessageBothPokemon(source, target);
-    }
-    IEnumerator OnBeforeMove(BattleUnit sourceUnit)
-    {
-        if (!sourceUnit.Pokemon.OnBeforeMove())
+        //Run the screen's effect
+        if(effects.ScreenType != ScreenType.None)
         {
-            yield return ShowStatusChanges(sourceUnit.Pokemon);
-            yield return sourceUnit.Hud.UpdateLoseHP();
-            yield return CheckForFaint(sourceUnit);
-            yield break;
+            yield return ScreenMove(effects, sourceUnit);
         }
-    }
-    IEnumerator TwoTurnMoves(BattleUnit sourceUnit, BattleUnit targetUnit, Move move)
-    {
-        if (!sourceUnit.Pokemon.TwoTurnMove)
-        {
-            sourceUnit.Pokemon.TwoTurnMove = true;
-            sourceUnit.PlayTwoTurnAnimation(true);
-            yield return _attackDelay;
-            yield break;
-        }
-        else
-        {
-            //if the target is immune to the move type, returns the dialogue and ends the move
-            if (TargetIsImmune(targetUnit.Pokemon, move))
-            {
-                yield return _dialogueBox.TypeDialogue($"It doesn't affect enemy { targetUnit.Pokemon.Base.Name }.");
-                yield break;
-            }
-            else
-            {
-                sourceUnit.PlayTwoTurnAnimation(false);
-                yield return _attackDelay;
 
-                //apply damage values, animations, dialogues and check if contact was made, applying other effects as necessary
-                yield return RunDamage(sourceUnit, targetUnit, move);
-                sourceUnit.Pokemon.TwoTurnMove = false;
-                yield break;
-            }
-        }
+        //Display message for both Pokemon according to their Status
+        yield return DisplayMessageBothPokemon(sourceUnit.Pokemon, target);
     }
+
     IEnumerator RunDamage(BattleUnit sourceUnit, BattleUnit targetUnit, Move move)
     {
-        DamageDetails damageDetails = targetUnit.Pokemon.TakeDamage(move, sourceUnit.Pokemon, _currentWeather.Id);
+        var screen = targetUnit.IsPlayerTeam ? _playerTeam.TeamScreens : _enemyTeam.TeamScreens;
+        DamageDetails damageDetails = targetUnit.Pokemon.TakeDamage(move, sourceUnit.Pokemon, _currentWeather.Id, screen);
         targetUnit.PlayHitAnimation();
         yield return targetUnit.Hud.UpdateLoseHP();
         yield return ShowDamageDetails(damageDetails, targetUnit.Pokemon);
@@ -623,7 +624,7 @@ public class BattleSystem : MonoBehaviour
         {
             foreach (StatBoost statBoost in effects.Boosts)
             {
-                if (target.CanReceiveBoost(statBoost.stat, statBoost.boost, target))
+                if (target.CanReceiveBoost(statBoost, target))
                 {
                     target.ApplyBoost(statBoost);
                     yield return ShowStatusChanges(target);
@@ -666,6 +667,39 @@ public class BattleSystem : MonoBehaviour
         yield return sourceUnit.Hud.UpdateLoseHP();
         yield return CheckForFaint(sourceUnit);
     }
+    IEnumerator ScreenMove(MoveEffects effects, BattleUnit sourceUnit)
+    {
+        if (effects.ScreenType == ScreenType.AuroraVeil && _currentWeather.Id != WeatherID.Hail)
+        {
+            yield return _dialogueBox.TypeDialogue("But it failed!");
+            yield break;
+        }
+
+        if (sourceUnit.IsPlayerTeam)
+        {
+            if(_playerTeam.TeamScreens.Exists(obj => obj.Id == effects.ScreenType))
+            {
+                yield return _dialogueBox.TypeDialogue("But it failed!");
+                yield break;
+            }
+
+            _playerTeam.TeamScreens.Add(ScreenDB.Screens[effects.ScreenType]);
+            _playerTeam.TeamScreens[_playerTeam.TeamScreens.Count - 1].Duration = 5;
+            yield return _dialogueBox.TypeDialogue(_playerTeam.TeamScreens[_playerTeam.TeamScreens.Count - 1].PlayerStartMessage);
+        }
+        else
+        {
+            if (_enemyTeam.TeamScreens.Exists(obj => obj.Id == effects.ScreenType))
+            {
+                yield return _dialogueBox.TypeDialogue("But it failed!");
+                yield break;
+            }
+
+            _enemyTeam.TeamScreens.Add(ScreenDB.Screens[effects.ScreenType]);
+            _enemyTeam.TeamScreens[_enemyTeam.TeamScreens.Count - 1].Duration = 5;
+            yield return _dialogueBox.TypeDialogue(_enemyTeam.TeamScreens[_enemyTeam.TeamScreens.Count - 1].EnemyStartMessage);
+        }
+    }
     void UpdateWeatherImage(WeatherID weatherID)
     {
         _weatherImage.sprite = _weathers[(int)weatherID];
@@ -683,12 +717,13 @@ public class BattleSystem : MonoBehaviour
         else
             yield return _dialogueBox.TypeDialogue("But it failed!");
     }
-    IEnumerator RunWeatherAfterTurn(BattleUnit firstUnit, BattleUnit secondUnit)
+    IEnumerator RunEffectsAfterTurn(BattleUnit firstUnit, BattleUnit secondUnit)
     {
         //make sure that Environmental Weather lasts until replaced
         if (!_currentWeather.EnvironmentWeather)
             _currentWeather.Duration--;
 
+        //remove weather or run its damage
         if (_currentWeather.Duration == 0)
         {
             yield return _dialogueBox.TypeDialogue(_currentWeather.EndMessage);
@@ -702,6 +737,34 @@ public class BattleSystem : MonoBehaviour
                 yield return RunWeatherDamage(firstUnit);
                 yield return RunWeatherDamage(secondUnit);
             }                
+        }
+
+        //check if the player has any screen and run its dialogue
+        if(_playerTeam.TeamScreens.Count > 0)
+        {
+            foreach(Screen screen in _playerTeam.TeamScreens)
+            {
+                screen.Duration--;
+                if(screen.Duration == 0)
+                {
+                    yield return _dialogueBox.TypeDialogue(screen.PlayerEndMessage);
+                    _playerTeam.TeamScreens.Remove(screen);
+                }
+            }
+        }
+
+        //check if the enemy has any screen and run its dialogue
+        if (_enemyTeam.TeamScreens.Count > 0)
+        {
+            foreach (Screen screen in _enemyTeam.TeamScreens)
+            {
+                screen.Duration--;
+                if (screen.Duration == 0)
+                {
+                    yield return _dialogueBox.TypeDialogue(screen.EnemyEndMessage);
+                    _enemyTeam.TeamScreens.Remove(screen);
+                }
+            }
         }
     }
     IEnumerator RunWeatherDamage(BattleUnit unit)

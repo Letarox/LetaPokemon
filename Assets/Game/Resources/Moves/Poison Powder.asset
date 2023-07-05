@@ -13,15 +13,26 @@ MonoBehaviour:
   m_Name: Poison Powder
   m_EditorClassIdentifier: 
   name: Poison Powder
-  description: A move that may poison the foe.
+  description: The user scatters a cloud of poisonous dust that poisons the target.
   type: 4
   category: 2
+  variation: 3
+  target: 0
   power: 0
   accuracy: 100
   pp: 35
+  priority: 0
+  recoil: 0
+  makesContact: 0
+  bypassAccuracy: 0
+  twoTurnMove: 0
+  mustRecharge: 0
+  hpDrainingMove: 0
+  onCastMessage: 
   effects:
     boosts: []
     status: 1
     volatileStatus: 0
-  target: 0
+    weatherEffect: 0
+    screenType: 0
   secondaryEffects: []

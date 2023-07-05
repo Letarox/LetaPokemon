@@ -208,12 +208,12 @@ public class Pokemon
 
         return true;
     }
-    public bool CanReceiveBoost(Stat stat, int boost, Pokemon pokemon)
+    public bool CanReceiveBoost(StatBoost statBoost, Pokemon pokemon)
     {
         //check if the target has an ability with OnStatsChange and if it does, allows the ability to check if the current stat can be changed
         if (Base?.Ability?.OnStatsChange != null)
         {
-            return Base.Ability.OnStatsChange(stat, boost, pokemon);
+            return Base.Ability.OnStatsChange(statBoost, pokemon);
         }
 
         return true;
@@ -280,7 +280,7 @@ public class Pokemon
 
     }
 
-    public DamageDetails TakeDamage(Move move, Pokemon attacker, WeatherID weatherId)
+    public DamageDetails TakeDamage(Move move, Pokemon attacker, WeatherID weatherId, List<Screen> screens)
     {
         //Create the damage details and calculates both the effectiveness and critical values
         DamageDetails damageDetails = new DamageDetails()
@@ -289,7 +289,7 @@ public class Pokemon
             Critical = (Random.Range(1.00f, 100.00f) <= (attacker.Critical * 100f)) ? 1.5f : 1f
         };
 
-        int damage = DamageCalculation(move, attacker, weatherId, damageDetails);
+        int damage = DamageCalculation(move, attacker, weatherId, damageDetails, screens);
 
         //if struggle damages the attacker for a 1/4 of their health
         if (move.Base.name == "Struggle")
@@ -315,7 +315,7 @@ public class Pokemon
         return damageDetails;
     }
 
-    private int DamageCalculation(Move move, Pokemon attacker, WeatherID weatherId, DamageDetails damageDetails)
+    private int DamageCalculation(Move move, Pokemon attacker, WeatherID weatherId, DamageDetails damageDetails, List<Screen> screens)
     {
         //Applies the whole formula of damage, calculating all instances that can impact the outcome of the damage
         float stab = (attacker.Base.PrimaryType == move.Base.Type || attacker.Base.SecondaryType == move.Base.Type) ? 1.5f : 1f;
@@ -323,7 +323,12 @@ public class Pokemon
         float abilities = attacker.OnDamageCheck(attacker, move);
         float weather = ((move.Base.Type == PokemonType.Fire && weatherId == WeatherID.Sunny) || (move.Base.Type == PokemonType.Water && weatherId == WeatherID.Rain)) ? 1.5f :
             ((move.Base.Type == PokemonType.Fire && weatherId == WeatherID.Rain) || (move.Base.Type == PokemonType.Water && weatherId == WeatherID.Sunny)) ? 0.5f : 1f;
-        float modifiers = Random.Range(0.85f, 1f) * damageDetails.TypeEffectiveness * damageDetails.Critical * stab * burn * abilities * weather;
+        float screen = (move.Base.Category == MoveCategory.Physical) ?
+            screens.Exists(obj => obj.Id == ScreenType.Reflect || obj.Id == ScreenType.AuroraVeil) ? 
+                0.5f : 1f :
+            screens.Exists(obj => obj.Id == ScreenType.LightScreen || obj.Id == ScreenType.AuroraVeil) ? 
+                0.5f : 1f;
+        float modifiers = Random.Range(0.85f, 1f) * damageDetails.TypeEffectiveness * damageDetails.Critical * stab * burn * abilities * weather * screen;
         int offense = (move.Base.Category == MoveCategory.Physical) ?
             (damageDetails.Critical > 1f) ?
                 RunCriticalCalculation(Stat.Attack, attacker) : attacker.Attack :
@@ -368,6 +373,17 @@ public class Pokemon
             return Base.Ability.OnAccuracyCheck(this);
         }
         return 1f;
+    }
+
+    public bool OnPokemonSwitch(Pokemon target)
+    {
+        //if the pokemon ability has OnAccuracyCheck, runs it, otherwise returns 1f
+        if (Base?.Ability?.OnPokemonSwitch != null)
+        {
+            Base.Ability.OnPokemonSwitch(target);
+            return true;
+        }
+        return false;
     }
 
     public void OnContactCheck(Pokemon attacker)
