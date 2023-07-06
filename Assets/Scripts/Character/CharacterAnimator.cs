@@ -35,6 +35,9 @@ public class CharacterAnimator : MonoBehaviour
 
     void Update()
     {
+        if (GameManager.gameState == GameState.InBattle)
+            return;
+
         SpriteAnimator prevAnim = _currentAnim;
 
         if (MoveX == 1)

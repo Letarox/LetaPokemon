@@ -20,7 +20,7 @@ public class BattleUnit : MonoBehaviour
     {
         _spriteRenderer = GetComponent<SpriteRenderer>();
         if (_spriteRenderer == null)
-            Debug.LogError("SpriteRenderer is NULL on " + transform.name);        
+            Debug.LogError("SpriteRenderer is NULL on " + transform.name);
         _originalColor = GetComponent<SpriteRenderer>().color;
         if (_originalColor == null)
             Debug.LogError("SpriteRenderer.Color is NULL on " + transform.name);

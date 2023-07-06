@@ -14,7 +14,7 @@ public class BattleHud : MonoBehaviour
 
     Pokemon _pokemon;
 
-    private void OnDisable()
+    void OnDisable()
     {
         _pokemon.OnStatusChanged -= SetStatusImage;
     }

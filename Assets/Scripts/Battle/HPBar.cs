@@ -7,6 +7,14 @@ public class HPBar : MonoBehaviour
 {
     [SerializeField] Slider _hpBarSlider;
     [SerializeField] Image _hpBarColor;
+    float _sliderFinalValue;
+    float _changeAmount;
+    float _currentHP;
+
+    // Calculate duration based on remaining health
+    float _duration;
+
+    float _timer;
 
     public void SetHP(int currentHP, int maxHP)
     {
@@ -20,33 +28,51 @@ public class HPBar : MonoBehaviour
 
     public IEnumerator LoseHPSmoothly(float current, float max)
     {
-        //check the value that needs to be updated on the slider and does it smoothly
-        float sliderFinalValue = current / max;
-        float changeAmount = max - current;
-        float currentHP = _hpBarSlider.value;
-        while (_hpBarSlider.value > sliderFinalValue)
+        _sliderFinalValue = current / max;
+        _changeAmount = max - current;
+        _currentHP = _hpBarSlider.value;
+
+        // Calculate duration based on remaining health
+        _duration = Mathf.Lerp(20f, 40f, current / max);
+
+        _timer = 0f;
+
+        while (_hpBarSlider.value > _sliderFinalValue)
         {
-            currentHP -= (changeAmount * Time.deltaTime) / 18;
-            UpdateHPBarColor(currentHP);
-            if (currentHP < sliderFinalValue)
-                currentHP = sliderFinalValue;
-            _hpBarSlider.value = currentHP;
+            _timer += Time.deltaTime;
+            _currentHP -= (_changeAmount * Time.deltaTime) / _duration;
+            UpdateHPBarColor(_currentHP);
+
+            if (_currentHP < _sliderFinalValue)
+                _currentHP = _sliderFinalValue;
+
+            _hpBarSlider.value = _currentHP;
+
             yield return null;
         }
     }
     public IEnumerator RegainHPSmoothly(float current, float max, float healthRegained)
     {
-        //check the value that needs to be updated on the slider and does it smoothly
-        float sliderFinalValue = current / max;
-        float changeAmount = current - healthRegained;
-        float currentHP = _hpBarSlider.value;
-        while (_hpBarSlider.value < sliderFinalValue)
+        _sliderFinalValue = current / max;
+        _changeAmount = current + healthRegained;
+        _currentHP = _hpBarSlider.value;
+
+        // Calculate duration based on remaining health
+        _duration = Mathf.Lerp(20, 40f, current / max);
+
+        _timer = 0f;
+
+        while (_hpBarSlider.value < _sliderFinalValue)
         {
-            currentHP += (changeAmount * Time.deltaTime) / 18;
-            UpdateHPBarColor(currentHP);
-            if (currentHP > sliderFinalValue)
-                currentHP = sliderFinalValue;
-            _hpBarSlider.value = currentHP;
+            _timer += Time.deltaTime;
+            _currentHP += (_changeAmount * Time.deltaTime) / _duration;
+            UpdateHPBarColor(_currentHP);
+
+            if (_currentHP > _sliderFinalValue)
+                _currentHP = _sliderFinalValue;
+
+            _hpBarSlider.value = _currentHP;
+
             yield return null;
         }
     }
