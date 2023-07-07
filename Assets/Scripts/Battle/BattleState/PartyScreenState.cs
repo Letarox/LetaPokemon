@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class PartyScreenState : BattleStateBase
 {
-    private BusyState busyState;
+    private SwitchingPokemonState busyState;
     int currentMember;
 
     public PartyScreenState(BattleSystem battleSystem) : base(battleSystem)
@@ -12,7 +12,7 @@ public class PartyScreenState : BattleStateBase
     }
 
     
-    public void SetBusyState(BusyState busyState)
+    public void SetBusyState(SwitchingPokemonState busyState)
     {
         this.busyState = busyState;
     }
@@ -58,7 +58,7 @@ public class PartyScreenState : BattleStateBase
 
             battleSystem.CurrentMember = currentMember;
             battleSystem.PartyScreen.gameObject.SetActive(false);
-            battleSystem.TransitionToState(BattleState.Busy);            
+            battleSystem.TransitionToState(BattleState.SwitchingPokemon);            
         }
         else if (Input.GetKeyDown(KeyCode.Escape) && battleSystem.ActivePlayerUnit.Pokemon.HP > 0)
         {

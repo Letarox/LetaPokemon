@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
-    <LangVersion>8.0</LangVersion>
+    <LangVersion>latest</LangVersion>
   </PropertyGroup>
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -53,9 +53,6 @@
     <UnityVersion>2021.2.10f1</UnityVersion>
   </PropertyGroup>
   <ItemGroup>
-    <Analyzer Include="C:\Program Files (x86)\Microsoft Visual Studio Tools for Unity\16.0\Analyzers\Microsoft.Unity.Analyzers.dll" />
-  </ItemGroup>
-  <ItemGroup>
     <Compile Include="Assets\Scripts\Battle\PartyMemberUI.cs" />
     <Compile Include="Assets\Scripts\Gameplay\Dialogue.cs" />
     <Compile Include="Assets\Scripts\Data\WeatherDB.cs" />
@@ -75,9 +72,8 @@
     <Compile Include="Assets\Scripts\Battle\BattleDialogueBox.cs" />
     <Compile Include="Assets\Scripts\Battle\Weather.cs" />
     <Compile Include="Assets\Scripts\Battle\BattleState\BattleStateBase.cs" />
-    <Compile Include="Assets\Scripts\Battle\BattleState\StartState.cs" />
     <Compile Include="Assets\Scripts\Battle\BattleState\BattleOverState.cs" />
-    <Compile Include="Assets\Scripts\Battle\BattleState\BusyState.cs" />
+    <Compile Include="Assets\Scripts\Battle\BattleState\SwitchingPokemonState.cs" />
     <Compile Include="Assets\Scripts\GameManager.cs" />
     <Compile Include="Assets\Scripts\Pokemons\MoveBase.cs" />
     <Compile Include="Assets\Scripts\Pokemons\PokemonBase.cs" />
@@ -97,6 +93,7 @@
     <Compile Include="Assets\Scripts\Data\ScreenDB.cs" />
     <Compile Include="Assets\Scripts\Pokemons\Condition.cs" />
     <Compile Include="Assets\Scripts\Gameplay\DialogueManager.cs" />
+    <Compile Include="Assets\Scripts\Battle\BattleState\AfterTurnState.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\TextMesh Pro\Shaders\TMPro.cginc" />

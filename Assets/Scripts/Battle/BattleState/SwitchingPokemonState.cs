@@ -2,10 +2,10 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class BusyState : BattleStateBase
+public class SwitchingPokemonState : BattleStateBase
 {
     private RunningTurnState runningTurnState;
-    public BusyState(BattleSystem battleSystem) : base(battleSystem)
+    public SwitchingPokemonState(BattleSystem battleSystem) : base(battleSystem)
     {
     }
     public void SetRunningTurnState(RunningTurnState runningTurnState)
@@ -40,7 +40,12 @@ public class BusyState : BattleStateBase
         }
 
         yield return battleSystem.FaintDelay;
+        if (battleSystem.TurnOrder.Contains(battleSystem.ActivePlayerUnit))
+            battleSystem.TurnOrder.Remove(battleSystem.ActivePlayerUnit);
+        
+        battleSystem.TurnOrder.Remove(battleSystem.ActivePlayerUnit);
         battleSystem.ActivePlayerUnit.Setup(newPokemon);
+        battleSystem.TurnOrder.Add(battleSystem.ActivePlayerUnit);
         battleSystem.DialogueBox.SetMoveNames(newPokemon.Moves);
         yield return battleSystem.DialogueBox.TypeDialogue($"Go {newPokemon.Base.Name}!");
         yield return battleSystem.FaintDelay;
@@ -54,7 +59,7 @@ public class BusyState : BattleStateBase
         }
         else
         {
-            battleSystem.TransitionToState(BattleState.ActionSelection);
+            battleSystem.TransitionToState(BattleState.AfterTurn);
         }
     }
     public IEnumerator PokemonSwitchAbility(Pokemon source, Pokemon target)

@@ -6,25 +6,12 @@ using UnityEngine;
 public delegate IEnumerator RunningTurnAction();
 public class RunningTurnState : BattleStateBase
 {
-    private PartyScreenState partyScreenState;
-    private RunningTurnAction runningTurnAction;
-    private List<Pokemon> turnOrder;
-
     public RunningTurnState(BattleSystem battleSystem) : base(battleSystem)
     {
-        turnOrder = new List<Pokemon>();
-    }
-    public void SetPartyScreenState(PartyScreenState partyScreenState)
-    {
-        this.partyScreenState = partyScreenState;
-    }
-    public void SetRunningTurnAction(RunningTurnAction action)
-    {
-        runningTurnAction = action;
     }
     public override void EnterState()
     {
-
+        
     }
     public override void UpdateState()
     {
@@ -34,57 +21,67 @@ public class RunningTurnState : BattleStateBase
     {
 
     }
-    List<Pokemon> SortedPokemonByTurnOrder(List<Pokemon> pokemonList)
+    List<BattleUnit> SortedPokemonByTurnOrder(List<BattleUnit> unitList)
     {
         // Sort the Pokémon based on priority and speed
-        pokemonList.Sort((a, b) =>
+        unitList.Sort((a, b) =>
         {
-            bool hasPriorityA = a.CurrentMove.Base.Priority > 0;
-            bool hasPriorityB = b.CurrentMove.Base.Priority > 0;
+            bool hasPriorityA = a.Pokemon.CurrentMove != null && a.Pokemon.CurrentMove.Base.Priority > 0;
+            bool hasPriorityB = b.Pokemon.CurrentMove != null && b.Pokemon.CurrentMove.Base.Priority > 0;
 
             if (hasPriorityA && !hasPriorityB)
             {
-                return -1; //Pokémon A has priority, so it goes first
+                return -1; // Pokémon A has priority, so it goes first
             }
             else if (!hasPriorityA && hasPriorityB)
             {
-                return 1; //Pokémon B has priority, so it goes first
+                return 1; // Pokémon B has priority, so it goes first
             }
             else if (hasPriorityA && hasPriorityB)
             {
-                //Both Pokémon have priority moves, so randomize the order
+                // Both Pokémon have priority moves, compare their priority levels
+                int priorityComparison = b.Pokemon.CurrentMove.Base.Priority.CompareTo(a.Pokemon.CurrentMove.Base.Priority);
+                if (priorityComparison != 0)
+                    return priorityComparison;
+
+                // If there is a tie in priority, sort based on speed
+                int speedComparison = b.Pokemon.Speed.CompareTo(a.Pokemon.Speed);
+                if (speedComparison != 0)
+                    return speedComparison;
+
+                // If there is a speed tie, randomly decide the order
                 return UnityEngine.Random.Range(0, 2) == 0 ? -1 : 1;
             }
             else
             {
-                //Neither Pokémon has priority moves, compare their speeds
-                int speedComparison = b.Speed.CompareTo(a.Speed);
-                if (speedComparison != 0)
-                    return speedComparison;
+                // Neither Pokémon has priority moves, compare their speeds
+                if (a.Pokemon.CurrentMove == null && b.Pokemon.CurrentMove == null)
+                {
+                    // Both Pokémon don't have a current move, order them based on speed
+                    return b.Pokemon.Speed.CompareTo(a.Pokemon.Speed);
+                }
+                else if (a.Pokemon.CurrentMove == null)
+                {
+                    return 1; // Pokémon A doesn't have a current move, so Pokémon B goes first
+                }
+                else if (b.Pokemon.CurrentMove == null)
+                {
+                    return -1; // Pokémon B doesn't have a current move, so Pokémon A goes first
+                }
+                else
+                {
+                    // Compare their speeds when both have a current move
+                    int speedComparison = b.Pokemon.Speed.CompareTo(a.Pokemon.Speed);
+                    if (speedComparison != 0)
+                        return speedComparison;
 
-                //If there is a speed tie, randomly decide the order
-                return UnityEngine.Random.Range(0, 2) == 0 ? -1 : 1;
+                    // If there is a speed tie, randomly decide the order
+                    return UnityEngine.Random.Range(0, 2) == 0 ? -1 : 1;
+                }
             }
         });
 
-        return pokemonList;
-    }
-    public bool CheckFirstTurn(Pokemon playerPokemon, Move playerMove, Pokemon enemyPokemon, Move enemyMove)
-    {
-        //check if any move has priority, otherwise just checks whoever is faster. In case of speed-tie a random pokemon will be selected
-        if (playerMove.Base.Priority > enemyMove.Base.Priority)
-            return true;
-        else if (playerMove.Base.Priority < enemyMove.Base.Priority)
-            return false;
-        else
-        {
-            if (playerPokemon.Speed > enemyPokemon.Speed)
-                return true;
-            else if (playerPokemon.Speed < enemyPokemon.Speed)
-                return false;
-            else
-                return UnityEngine.Random.Range(1, 3) == 1 ? true : false;
-        }
+        return unitList;
     }
 
     public IEnumerator RunTurn()
@@ -96,43 +93,22 @@ public class RunningTurnState : BattleStateBase
             battleSystem.ActiveEnemyUnit.Pokemon.CurrentMove = battleSystem.ActiveEnemyUnit.Pokemon.GetRandomMove();
 
         // We check who goes first based on speed. In case of a speed-tie, we randomize who goes first. Then a handle of each unit is also set
-        bool playerFirst = CheckFirstTurn(battleSystem.ActivePlayerUnit.Pokemon, battleSystem.ActivePlayerUnit.Pokemon.CurrentMove, battleSystem.ActiveEnemyUnit.Pokemon, battleSystem.ActiveEnemyUnit.Pokemon.CurrentMove);
-        BattleUnit firstUnit = (playerFirst) ? battleSystem.ActivePlayerUnit : battleSystem.ActiveEnemyUnit;
-        BattleUnit secondUnit = (!playerFirst) ? battleSystem.ActivePlayerUnit : battleSystem.ActiveEnemyUnit;
-        Pokemon secondPokemon = secondUnit.Pokemon;
-
-        // We run the move for the First Unit
-        yield return RunMove(firstUnit, secondUnit, firstUnit.Pokemon.CurrentMove);
-        if (battleSystem.State == BattleState.BattleOver)
-            yield break;
-
-        // If the second unit did not die to the move, we proceed with its own selection. In case of a switch in pokemon, this will be skipped 
-        if (secondPokemon.HP > 0)
+        battleSystem.TurnOrder.Add(battleSystem.ActivePlayerUnit);
+        battleSystem.TurnOrder.Add(battleSystem.ActiveEnemyUnit);
+        battleSystem.TurnOrder = SortedPokemonByTurnOrder(battleSystem.TurnOrder);
+        foreach(BattleUnit unit in battleSystem.TurnOrder)
         {
-            yield return RunMove(secondUnit, firstUnit, secondUnit.Pokemon.CurrentMove);
-            if (battleSystem.State == BattleState.BattleOver)
-                yield break;
-        }
-
-        // After both moves are executed, we run the AfterTurn in order of speed
-        yield return RunAfterTurn(firstUnit);
-        yield return RunAfterTurn(secondUnit);
-        if (battleSystem.CurrentWeather != WeatherDB.Weathers[WeatherID.None])
-            yield return RunEffectsAfterTurn(firstUnit, secondUnit);
-
-        // If this did not result in the end of battle, we reset the turn, allowing the player to choose a new action
-        if (battleSystem.State != BattleState.BattleOver)
-        {
-            if (battleSystem.ActivePlayerUnit.Pokemon.TwoTurnMove || battleSystem.ActivePlayerUnit.Pokemon.MustRecharge)
+            if(unit.Pokemon.HP > 0)
             {
-                yield return battleSystem.AttackDelay;
-                battleSystem.StartCoroutine(RunTurn());
-            }
-            else
-            {
-                battleSystem.TransitionToState(BattleState.ActionSelection);
+                if (unit.IsPlayerTeam)
+                    yield return RunMove(battleSystem.ActivePlayerUnit, battleSystem.ActiveEnemyUnit, battleSystem.ActivePlayerUnit.Pokemon.CurrentMove);
+                else
+                    yield return RunMove(battleSystem.ActiveEnemyUnit, battleSystem.ActivePlayerUnit, battleSystem.ActiveEnemyUnit.Pokemon.CurrentMove);
+                if (battleSystem.State == BattleState.BattleOver)
+                    yield break;
             }
         }
+        battleSystem.TransitionToState(BattleState.AfterTurn);        
     }
     public IEnumerator SwitchPokemonTurn()
     {
@@ -140,32 +116,7 @@ public class RunningTurnState : BattleStateBase
         Move enemyMove = battleSystem.ActiveEnemyUnit.Pokemon.GetRandomMove();
         yield return RunMove(battleSystem.ActiveEnemyUnit, battleSystem.ActivePlayerUnit, enemyMove);
 
-        // Check who goes first in the AfterTurn
-        bool enemyFirst = (battleSystem.ActiveEnemyUnit.Pokemon.Speed > battleSystem.ActivePlayerUnit.Pokemon.Speed) ? true :
-            (battleSystem.ActivePlayerUnit.Pokemon.Speed == battleSystem.ActiveEnemyUnit.Pokemon.Speed) ? (UnityEngine.Random.Range(1, 3) == 1) ? true : false :
-            false;
-
-        // Apply after turn for both pokemon
-        if (enemyFirst)
-        {
-            yield return RunAfterTurn(battleSystem.ActiveEnemyUnit);
-            yield return RunAfterTurn(battleSystem.ActivePlayerUnit);
-            if (battleSystem.CurrentWeather != WeatherDB.Weathers[WeatherID.None])
-                yield return RunEffectsAfterTurn(battleSystem.ActiveEnemyUnit, battleSystem.ActivePlayerUnit);
-        }
-        else
-        {
-            yield return RunAfterTurn(battleSystem.ActivePlayerUnit);
-            yield return RunAfterTurn(battleSystem.ActiveEnemyUnit);
-            if (battleSystem.CurrentWeather != WeatherDB.Weathers[WeatherID.None])
-                yield return RunEffectsAfterTurn(battleSystem.ActivePlayerUnit, battleSystem.ActiveEnemyUnit);
-        }
-
-        // If this did not result in the end of battle, we reset the turn, allowing the player to choose a new action
-        if (battleSystem.State != BattleState.BattleOver)
-        {
-            battleSystem.TransitionToState(BattleState.ActionSelection);
-        }
+        battleSystem.TransitionToState(BattleState.AfterTurn);
     }
     bool AccuracyCheck(Move move, Pokemon source, Pokemon target)
     {
@@ -192,6 +143,8 @@ public class RunningTurnState : BattleStateBase
     }
     public IEnumerator RunMove(BattleUnit sourceUnit, BattleUnit targetUnit, Move move)
     {
+        if (move == null)
+            yield break;
         //check if the pokemon can act that turn before the move is called. In case it can't, it shows its dialogue updates and if it died due to confusion
         if (!sourceUnit.Pokemon.OnBeforeMove())
         {
@@ -200,7 +153,8 @@ public class RunningTurnState : BattleStateBase
             yield return battleSystem.CheckForFaint(sourceUnit);
             yield break;
         }
-
+        //display message if the pokemon wakes up or is no longer confused
+        yield return battleSystem.ShowStatusChanges(sourceUnit.Pokemon);
         //check if the target has its MustRecharge set to true, therefore recharging and cancelling his turn after the message is displayed
         if (sourceUnit.Pokemon.MustRecharge)
         {
@@ -414,18 +368,7 @@ public class RunningTurnState : BattleStateBase
                 if (!secondaryEffect)
             yield return battleSystem.DialogueBox.TypeDialogue("But it failed!");
     }
-    public IEnumerator RunAfterTurn(BattleUnit sourceUnit)
-    {
-        //after the turn ends, we apply damage effect from Status Conditions and Weather Effects
-        if (battleSystem.State == BattleState.BattleOver)
-            yield break;
-        //yield return new WaitUntil(() => _state == BattleState.RunningTurn);
-
-        sourceUnit.Pokemon.OnAfterTurn();
-        yield return battleSystem.ShowStatusChanges(sourceUnit.Pokemon);
-        yield return sourceUnit.Hud.UpdateLoseHP();
-        yield return battleSystem.CheckForFaint(sourceUnit);
-    }
+    
     IEnumerator ScreenMove(MoveEffects effects, BattleUnit sourceUnit)
     {
         if (effects.ScreenType == ScreenType.AuroraVeil && battleSystem.CurrentWeather.Id != WeatherID.Hail)
@@ -472,68 +415,7 @@ public class RunningTurnState : BattleStateBase
         else
             yield return battleSystem.DialogueBox.TypeDialogue("But it failed!");
     }
-    public IEnumerator RunEffectsAfterTurn(BattleUnit firstUnit, BattleUnit secondUnit)
-    {
-        //make sure that Environmental Weather lasts until replaced
-        if (!battleSystem.CurrentWeather.EnvironmentWeather)
-            battleSystem.CurrentWeather.Duration--;
-
-        //remove weather or run its damage
-        if (battleSystem.CurrentWeather.Duration == 0)
-        {
-            yield return battleSystem.DialogueBox.TypeDialogue(battleSystem.CurrentWeather.EndMessage);
-            battleSystem.CurrentWeather = WeatherDB.Weathers[WeatherID.None];
-            battleSystem.UpdateWeatherImage(WeatherID.None);
-        }
-        else
-        {
-            if (battleSystem.CurrentWeather?.OnAfterTurn != null)
-            {
-                yield return RunWeatherDamage(firstUnit);
-                yield return RunWeatherDamage(secondUnit);
-            }
-        }
-
-        //check if the player has any screen and run its dialogue
-        if (battleSystem.PlayerTeam.TeamScreens.Count > 0)
-        {
-            foreach (Screen screen in battleSystem.PlayerTeam.TeamScreens)
-            {
-                screen.Duration--;
-                if (screen.Duration == 0)
-                {
-                    yield return battleSystem.DialogueBox.TypeDialogue(screen.PlayerEndMessage);
-                    battleSystem.PlayerTeam.TeamScreens.Remove(screen);
-                }
-            }
-        }
-
-        //check if the enemy has any screen and run its dialogue
-        if (battleSystem.EnemyTeam.TeamScreens.Count > 0)
-        {
-            foreach (Screen screen in battleSystem.EnemyTeam.TeamScreens)
-            {
-                screen.Duration--;
-                if (screen.Duration == 0)
-                {
-                    yield return battleSystem.DialogueBox.TypeDialogue(screen.EnemyEndMessage);
-                    battleSystem.EnemyTeam.TeamScreens.Remove(screen);
-                }
-            }
-        }
-    }
-    IEnumerator RunWeatherDamage(BattleUnit unit)
-    {
-        if (battleSystem.CurrentWeather.OnAfterTurn.Invoke(unit.Pokemon))
-        {
-            yield return battleSystem.ShowStatusChanges(unit.Pokemon);
-            yield return battleSystem.WeatherDelay;
-            unit.PlayHitAnimation();
-            yield return battleSystem.WeatherDelay;
-            yield return unit.Hud.UpdateLoseHP();
-            yield return battleSystem.CheckForFaint(unit);
-        }
-    }
+    
     IEnumerator ShowDamageDetails(DamageDetails damageDetails, Pokemon attackedPokemon)
     {
         //Display damage details according to Crit/Effectiveness
