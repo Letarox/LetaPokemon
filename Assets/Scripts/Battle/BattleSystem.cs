@@ -26,7 +26,8 @@ public class BattleSystem : MonoBehaviour
     int _currentAction;
     int _currentMove;
     int _currentMember;
-    Weather _currentWeather;
+    WeatherManager _weatherManager = new WeatherManager();
+    BattleCalculator _battleCalculator = new BattleCalculator();
 
     WaitUntil _pressAnyKeyToContinue, _waitUntilRunningTurn;
     WaitForSeconds _attackDelay, _faintDelay, _weatherDelay;
@@ -36,12 +37,13 @@ public class BattleSystem : MonoBehaviour
     Team _playerTeam = new Team();
     Team _enemyTeam = new Team();
 
-    private Dictionary<BattleState, BattleStateBase> stateDictionary;
-    private PartyScreenState partyScreenState;
+    private Dictionary<BattleState, BattleStateBase> _stateDictionary;
+    private PartyScreenState _partyScreenState;
     private SwitchingPokemonState _busyState;
-    private BattleOverState battleOverState;
+    private BattleOverState _battleOverState;
     private RunningTurnState _runningTurnState;
     private List<BattleUnit> _turnOrder;
+    private List<BattleUnit> _activePokemon;
 
     public BattleUnit ActivePlayerUnit => _playerUnit;
     public BattleUnit ActiveEnemyUnit => _enemyUnit;
@@ -54,19 +56,20 @@ public class BattleSystem : MonoBehaviour
     public WaitForSeconds FaintDelay => _faintDelay;
     public WaitForSeconds WeatherDelay => _weatherDelay;
     public WaitUntil WaintUntilRunningTurn => _waitUntilRunningTurn;
+    public WeatherManager WeatherManager => _weatherManager;
+    public BattleCalculator BattleCalculator => _battleCalculator;
     public BattleStateBase CurrentState { get; private set; }
     public int CurrentAction { get { return _currentAction; } set { _currentAction = value; } }
     public int CurrentMove { get { return _currentMove; } set { _currentMove = value; } }
     public int CurrentMember { get { return _currentMember; } set { _currentMember = value; } }
-    public Move ChosenMove { get; set; }
     public PokemonParty PlayerParty { get { return _playerParty; } private set { _playerParty = value; } }
-    public Weather CurrentWeather { get { return _currentWeather; } set { _currentWeather = value; } }
     public BattleState State { get { return _state; } private set { _state = value; } }
     public BattleState? PreState { get { return _preState; } set { _preState = value; } }
     public Team PlayerTeam { get { return _playerTeam; } private set { _playerTeam = value; } }
     public Team EnemyTeam { get { return _enemyTeam; } private set { _enemyTeam = value; } }
     public BattleUnit FaintedUnit { get; private set; }
     public List<BattleUnit> TurnOrder { get { return _turnOrder; } set { _turnOrder = value; } }
+    public List<BattleUnit> ActivePokemon { get { return _activePokemon; } set { _activePokemon = value; } }
     void Start()
     {
         _pressAnyKeyToContinue = new WaitUntil(() => Input.GetKeyDown(KeyCode.X));
@@ -74,26 +77,31 @@ public class BattleSystem : MonoBehaviour
         _attackDelay = new WaitForSeconds(1.5f);
         _faintDelay = new WaitForSeconds(1f);
         _weatherDelay = new WaitForSeconds(0.25f);
-        partyScreenState = new PartyScreenState(this);
+        _partyScreenState = new PartyScreenState(this);
         _runningTurnState = new RunningTurnState(this);
         _busyState = new SwitchingPokemonState(this);
-        battleOverState = new BattleOverState(this);
-        TurnOrder = new List<BattleUnit>();
-        stateDictionary = new Dictionary<BattleState, BattleStateBase>
+        _battleOverState = new BattleOverState(this);
+        _turnOrder = new List<BattleUnit>();
+        _activePokemon = new List<BattleUnit>();
+        _weatherManager.OnWeatherChange += UpdateWeatherImage;
+        _weatherManager.OnWeatherStartFinish += WeatherStartFinish;
+        _weatherManager.OnWeatherDamage += WeatherDamageText;
+        _weatherManager.OnWeatherMove += WeatherMove;
+        _stateDictionary = new Dictionary<BattleState, BattleStateBase>
         {
             { BattleState.ActionSelection, new ActionSelectionState(this) },
+            { BattleState.AfterTurn, new AfterTurnState(this) },
             { BattleState.BattleOver, new BattleOverState(this) },
-            { BattleState.SwitchingPokemon, new SwitchingPokemonState(this) },
             { BattleState.MoveSelection, new MoveSelectionState(this) },
             { BattleState.PartyScreen, new PartyScreenState(this) },
             { BattleState.RunningTurn, new RunningTurnState(this) },
-            { BattleState.AfterTurn, new AfterTurnState(this) },
+            { BattleState.SwitchingPokemon, new SwitchingPokemonState(this) },
     };
-        var moveSelectionState = (MoveSelectionState)stateDictionary[BattleState.MoveSelection];
-        var runningTurnState = (RunningTurnState)stateDictionary[BattleState.RunningTurn];
-        var partyScreenSt = (PartyScreenState)stateDictionary[BattleState.PartyScreen];
-        var busyState = (SwitchingPokemonState)stateDictionary[BattleState.SwitchingPokemon];
-        var afterTurnState = (AfterTurnState)stateDictionary[BattleState.AfterTurn];
+        var moveSelectionState = (MoveSelectionState)_stateDictionary[BattleState.MoveSelection];
+        var runningTurnState = (RunningTurnState)_stateDictionary[BattleState.RunningTurn];
+        var partyScreenSt = (PartyScreenState)_stateDictionary[BattleState.PartyScreen];
+        var busyState = (SwitchingPokemonState)_stateDictionary[BattleState.SwitchingPokemon];
+        var afterTurnState = (AfterTurnState)_stateDictionary[BattleState.AfterTurn];
 
         // Set the runningTurnState in the MoveSelectionState
         moveSelectionState.SetRunningTurnState(runningTurnState);
@@ -112,7 +120,7 @@ public class BattleSystem : MonoBehaviour
     public void TransitionToState(BattleState nextState, Action callback = null)
     {        
         CurrentState?.ExitState();        
-        CurrentState = stateDictionary[nextState];
+        CurrentState = _stateDictionary[nextState];
         CurrentState.EnterState();
         _state = nextState;        
         callback?.Invoke();
@@ -124,26 +132,18 @@ public class BattleSystem : MonoBehaviour
         _wildPokemon = wildPokemon;
         _currentAction = 0;
         _currentMove = 0;
-        _currentWeather = environmentWeather;
-        StartCoroutine(SetupBattle());
-        if (_currentWeather.Id != WeatherID.None)
-        {
-            _currentWeather.Duration = 1;
-            _currentWeather.EnvironmentWeather = true;
-            UpdateWeatherImage(_currentWeather.Id);
-        }
+        UpdateWeatherImage(environmentWeather);
+        StartCoroutine(SetupBattle(environmentWeather));        
     }
 
-    public IEnumerator SetupBattle()
+    public IEnumerator SetupBattle(Weather environmentWeather)
     {
         SetupPlayerParty();
         SetupEnemyPokemon();
 
         yield return _dialogueBox.TypeDialogue($"A wild { _enemyUnit.Pokemon.Base.Name } appeared.");
-        if (_currentWeather.Id != WeatherID.None)
-            yield return _dialogueBox.TypeDialogue($"{ _currentWeather.StartMessage }");
         yield return _faintDelay;
-
+        yield return _weatherManager.SetInitialWeather(environmentWeather);
         yield return _busyState.PokemonSwitchAbility(_playerUnit.Pokemon, _enemyUnit.Pokemon);
         yield return _busyState.PokemonSwitchAbility(_enemyUnit.Pokemon, _playerUnit.Pokemon);
 
@@ -181,8 +181,9 @@ public class BattleSystem : MonoBehaviour
         //check if the unit has fainted, if it has, apply its animation and dialogue and check if the battle can continue
         if (unit.Pokemon.HP <= 0)
         {
-            TurnOrder.Remove(unit);
             FaintedUnit = unit;
+            if (ActivePokemon.Contains(unit))
+                ActivePokemon.Remove(unit);
             unit.PlayFaintAnimation();
             yield return _faintDelay;
             yield return _dialogueBox.TypeDialogue($"{ unit.Pokemon.Base.Name } has fainted.");
@@ -191,11 +192,37 @@ public class BattleSystem : MonoBehaviour
         }
     }
 
-    public void UpdateWeatherImage(WeatherID weatherID)
+    public void UpdateWeatherImage(Weather weather)
     {
-        _weatherImage.sprite = _weathers[(int)weatherID];
+        _weatherImage.sprite = _weathers[(int)weather.Id];
     }
-    
+
+    IEnumerator WeatherStartFinish(bool isStarting)
+    {
+        //if the weather is starting, display start message. Otherwise display end message
+        if (isStarting)
+            yield return _dialogueBox.TypeDialogue(_weatherManager.CurrentWeather.StartMessage);
+        else
+            yield return _dialogueBox.TypeDialogue(_weatherManager.CurrentWeather.EndMessage);
+    }
+    IEnumerator WeatherMove(bool castSuccess)
+    {
+        //if the weather is not the same as the move weather effect, the cast is sucessful and display the proper message. Otherwise the cast fails
+        if(castSuccess)
+            yield return _dialogueBox.TypeDialogue(_weatherManager.CurrentWeather.CastMessage);
+        else
+            yield return _dialogueBox.TypeDialogue("But it failed!");
+    }
+    IEnumerator WeatherDamageText(BattleUnit unit)
+    {
+        yield return ShowStatusChanges(unit.Pokemon);
+        yield return WeatherDelay;
+        unit.PlayHitAnimation();
+        yield return WeatherDelay;
+        yield return unit.Hud.UpdateLoseHP();
+        yield return CheckForFaint(unit);
+    }
+
     public IEnumerator ShowStatusChanges(Pokemon pokemon)
     {
         //Dequeues the list of messages of status changes for the pokemon
@@ -208,6 +235,10 @@ public class BattleSystem : MonoBehaviour
 
     public void RaiseBattleOverEvent(bool won)
     {
+        //unsubscribe to all events from the weather when the battle is over, and invoke the onbattleover
+        _weatherManager.OnWeatherChange -= UpdateWeatherImage;
+        _weatherManager.OnWeatherStartFinish -= WeatherStartFinish;
+        _weatherManager.OnWeatherDamage -= WeatherDamageText;
         OnBattleOver?.Invoke(won);
     }
 }

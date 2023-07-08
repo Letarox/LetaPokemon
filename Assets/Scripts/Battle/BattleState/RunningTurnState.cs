@@ -11,7 +11,7 @@ public class RunningTurnState : BattleStateBase
     }
     public override void EnterState()
     {
-        
+       
     }
     public override void UpdateState()
     {
@@ -93,6 +93,7 @@ public class RunningTurnState : BattleStateBase
             battleSystem.ActiveEnemyUnit.Pokemon.CurrentMove = battleSystem.ActiveEnemyUnit.Pokemon.GetRandomMove();
 
         // We check who goes first based on speed. In case of a speed-tie, we randomize who goes first. Then a handle of each unit is also set
+        battleSystem.TurnOrder.Clear();
         battleSystem.TurnOrder.Add(battleSystem.ActivePlayerUnit);
         battleSystem.TurnOrder.Add(battleSystem.ActiveEnemyUnit);
         battleSystem.TurnOrder = SortedPokemonByTurnOrder(battleSystem.TurnOrder);
@@ -107,7 +108,7 @@ public class RunningTurnState : BattleStateBase
                 if (battleSystem.State == BattleState.BattleOver)
                     yield break;
             }
-        }
+        }        
         battleSystem.TransitionToState(BattleState.AfterTurn);        
     }
     public IEnumerator SwitchPokemonTurn()
@@ -117,21 +118,6 @@ public class RunningTurnState : BattleStateBase
         yield return RunMove(battleSystem.ActiveEnemyUnit, battleSystem.ActivePlayerUnit, enemyMove);
 
         battleSystem.TransitionToState(BattleState.AfterTurn);
-    }
-    bool AccuracyCheck(Move move, Pokemon source, Pokemon target)
-    {
-        //check if the move is being used on self
-        if (move.Base.Category == MoveCategory.Status && move.Base.Target == MoveTarget.Self)
-            return true;
-        //check if the target is currently using Dig/Fly
-        if (target.TwoTurnMove)
-            return false;
-        //check if the move should always hit
-        if (move.Base.BypassAccuracy)
-            return true;
-        //Generates a random float number between 1 and 100, multiplying by the accuracy of the move and accuracy of the pokemon, applying the stat changes.
-        //Clamps the accuracy to at least 33% of the move accuracy, and maximum of 3x its accuracy
-        return (UnityEngine.Random.Range(1.00f, 100.00f) <= Math.Clamp(move.Base.Accuracy * source.Accuracy * target.Evasion * source.OnAccuracyCheck() * target.OnAccuracyCheck(), move.Base.Accuracy * 0.33f, move.Base.Accuracy * 3f)) ? true : false;
     }
     bool TargetIsImmune(Pokemon pokemon, Move move)
     {
@@ -177,7 +163,7 @@ public class RunningTurnState : BattleStateBase
             yield return battleSystem.DialogueBox.TypeDialogue($"{ sourceUnit.Pokemon.Base.Name } { move.Base.OnCastMessage }");
 
         //check if the pokemon has hit its target
-        if (AccuracyCheck(move, sourceUnit.Pokemon, targetUnit.Pokemon))
+        if (battleSystem.BattleCalculator.AccuracyCheck(move, sourceUnit.Pokemon, targetUnit.Pokemon))
         {
             //if the move is Dig/Fly we play its animation and cancel the turn. If second turn, we check if the target can be damaged, and if it can, deals normal damage
             if (move.Base.TwoTurnMove && !sourceUnit.Pokemon.TwoTurnMove)
@@ -268,7 +254,7 @@ public class RunningTurnState : BattleStateBase
         //Run the weather effects and apply any effects as applicabe
         if (effects.WeatherEffect != WeatherID.None)
         {
-            yield return WeatherMove(effects);
+            yield return battleSystem.WeatherManager.WeatherMove(effects);
         }
 
         //Run the screen's effect
@@ -283,8 +269,8 @@ public class RunningTurnState : BattleStateBase
 
     IEnumerator RunDamage(BattleUnit sourceUnit, BattleUnit targetUnit, Move move)
     {
-        List<Screen> screen = targetUnit.IsPlayerTeam ? battleSystem.PlayerTeam.TeamScreens : battleSystem.EnemyTeam.TeamScreens;
-        DamageDetails damageDetails = targetUnit.Pokemon.TakeDamage(move, sourceUnit.Pokemon, battleSystem.CurrentWeather.Id, screen);
+        List<Screen> screens = targetUnit.IsPlayerTeam ? battleSystem.PlayerTeam.TeamScreens : battleSystem.EnemyTeam.TeamScreens;
+        DamageDetails damageDetails = battleSystem.BattleCalculator.ApplyDamage(move, sourceUnit.Pokemon, targetUnit.Pokemon, battleSystem.WeatherManager.CurrentWeather.Id, screens);
         targetUnit.PlayHitAnimation();
         yield return targetUnit.Hud.UpdateLoseHP();
         yield return ShowDamageDetails(damageDetails, targetUnit.Pokemon);
@@ -318,7 +304,7 @@ public class RunningTurnState : BattleStateBase
     IEnumerator ApplyContact(Pokemon source, Pokemon target)
     {
         //check if any pokemon has contact effects and apply such
-        target.OnContactCheck(source);
+        AbilityManager.Instance.OnContactCheck(source, target);
         if (target.StatusChanges.Count > 0)
             yield return battleSystem.ShowStatusChanges(target);
         if (source.StatusChanges.Count > 0)
@@ -338,7 +324,7 @@ public class RunningTurnState : BattleStateBase
         {
             foreach (StatBoost statBoost in effects.Boosts)
             {
-                if (target.CanReceiveBoost(statBoost, target))
+                if (AbilityManager.Instance.CanReceiveBoost(statBoost, target))
                 {
                     target.ApplyBoost(statBoost);
                     yield return battleSystem.ShowStatusChanges(target);
@@ -371,7 +357,7 @@ public class RunningTurnState : BattleStateBase
     
     IEnumerator ScreenMove(MoveEffects effects, BattleUnit sourceUnit)
     {
-        if (effects.ScreenType == ScreenType.AuroraVeil && battleSystem.CurrentWeather.Id != WeatherID.Hail)
+        if (effects.ScreenType == ScreenType.AuroraVeil && battleSystem.WeatherManager.CurrentWeather.Id != WeatherID.Hail)
         {
             yield return battleSystem.DialogueBox.TypeDialogue("But it failed!");
             yield break;
@@ -401,19 +387,6 @@ public class RunningTurnState : BattleStateBase
             battleSystem.EnemyTeam.TeamScreens[battleSystem.EnemyTeam.TeamScreens.Count - 1].Duration = 5;
             yield return battleSystem.DialogueBox.TypeDialogue(battleSystem.EnemyTeam.TeamScreens[battleSystem.EnemyTeam.TeamScreens.Count - 1].EnemyStartMessage);
         }
-    }
-    IEnumerator WeatherMove(MoveEffects effects)
-    {
-        if (battleSystem.CurrentWeather.Id != effects.WeatherEffect)
-        {
-            battleSystem.CurrentWeather = WeatherDB.Weathers[effects.WeatherEffect];
-            battleSystem.CurrentWeather.Duration = 5;
-            battleSystem.CurrentWeather.EnvironmentWeather = false;
-            yield return battleSystem.DialogueBox.TypeDialogue(battleSystem.CurrentWeather.CastMessage);
-            battleSystem.UpdateWeatherImage(battleSystem.CurrentWeather.Id);
-        }
-        else
-            yield return battleSystem.DialogueBox.TypeDialogue("But it failed!");
     }
     
     IEnumerator ShowDamageDetails(DamageDetails damageDetails, Pokemon attackedPokemon)

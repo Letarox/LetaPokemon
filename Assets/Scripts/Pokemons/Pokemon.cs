@@ -208,16 +208,7 @@ public class Pokemon
 
         return true;
     }
-    public bool CanReceiveBoost(StatBoost statBoost, Pokemon pokemon)
-    {
-        //check if the target has an ability with OnStatsChange and if it does, allows the ability to check if the current stat can be changed
-        if (Base?.Ability?.OnStatsChange != null)
-        {
-            return Base.Ability.OnStatsChange(statBoost, pokemon);
-        }
-
-        return true;
-    }
+    
 
     public void SetStatus(ConditionID conditionID)
     {
@@ -261,92 +252,6 @@ public class Pokemon
         HPChanged = true;
     }
 
-    int RunCriticalCalculation(Stat stat, Pokemon pokemon)
-    {
-        //check which value is higher for Attack/SpAttack and which is lower for Defense/SpDefense when a crit occurs
-        switch (stat)
-        {
-            case Stat.Attack:
-                return pokemon.Stats[Stat.Attack] > pokemon.Attack ? pokemon.Stats[Stat.Attack] : pokemon.Attack;
-            case Stat.Defense:
-                return Stats[Stat.Defense] < Defense ? Stats[Stat.Defense] : Defense;
-            case Stat.SpAttack:
-                return pokemon.Stats[Stat.SpAttack] > pokemon.SpecialAttack ? pokemon.Stats[Stat.SpAttack] : pokemon.SpecialAttack;
-            case Stat.SpDefense:
-                return Stats[Stat.SpDefense] < SpecialDefense ? Stats[Stat.SpDefense] : SpecialDefense;
-            default:
-                return 0;
-        }
-
-    }
-
-    public DamageDetails TakeDamage(Move move, Pokemon attacker, WeatherID weatherId, List<Screen> screens)
-    {
-        //Create the damage details and calculates both the effectiveness and critical values
-        DamageDetails damageDetails = new DamageDetails()
-        {
-            TypeEffectiveness = TypeChart.GetEffectiveness(move.Base.Type, Base.PrimaryType) * TypeChart.GetEffectiveness(move.Base.Type, Base.SecondaryType),
-            Critical = (Random.Range(1.00f, 100.00f) <= (attacker.Critical * 100f)) ? 1.5f : 1f
-        };
-
-        int damage = DamageCalculation(move, attacker, weatherId, damageDetails, screens);
-
-        //if struggle damages the attacker for a 1/4 of their health
-        if (move.Base.name == "Struggle")
-            attacker.UpdateHP(Mathf.FloorToInt(attacker.MaxHp / 4));        
-
-        //if the move is a HP Draining Move, apply the amount of health to be restored and adds the message to be displayed
-        if (move.Base.HPDrainingMove)
-        {
-            damageDetails.HealthRestored = (HP - damage) > 0 ? Mathf.FloorToInt(damage / 2) : Mathf.Clamp(Mathf.FloorToInt(HP / 2), 1, HP);
-            attacker.RegainHP(Mathf.FloorToInt(damageDetails.HealthRestored));
-            attacker.StatusChanges.Enqueue($"{ Base.Name } had its energy drained!");
-        }
-
-        //if the move contains recoil, apply the recoil based on the damage about to be dealt, being capped at the target HP in case of death
-        if (move.Base.Recoil > 0)
-        {
-            attacker.UpdateHP((HP - damage) > 0 ? Mathf.FloorToInt(damage / move.Base.Recoil) : Mathf.Clamp(Mathf.FloorToInt(HP / move.Base.Recoil), 1, HP));
-            attacker.StatusChanges.Enqueue($"{ attacker.Base.Name } is damage by recoil.");
-        }
-
-        UpdateHP(damage);
-        damageDetails.Fainted = (HP <= 0) ? true : false;
-        return damageDetails;
-    }
-
-    private int DamageCalculation(Move move, Pokemon attacker, WeatherID weatherId, DamageDetails damageDetails, List<Screen> screens)
-    {
-        //Applies the whole formula of damage, calculating all instances that can impact the outcome of the damage
-        float stab = (attacker.Base.PrimaryType == move.Base.Type || attacker.Base.SecondaryType == move.Base.Type) ? 1.5f : 1f;
-        float burn = (move.Base.Category == MoveCategory.Physical && attacker.Status == ConditionDB.Conditions[ConditionID.BRN] && attacker.Base.Ability.Id != AbilityID.Guts) ? 0.5f : 1f;
-        float abilities = attacker.OnDamageCheck(attacker, move);
-        float weather = ((move.Base.Type == PokemonType.Fire && weatherId == WeatherID.Sunny) || (move.Base.Type == PokemonType.Water && weatherId == WeatherID.Rain)) ? 1.5f :
-            ((move.Base.Type == PokemonType.Fire && weatherId == WeatherID.Rain) || (move.Base.Type == PokemonType.Water && weatherId == WeatherID.Sunny)) ? 0.5f : 1f;
-        float screen = (move.Base.Category == MoveCategory.Physical) ?
-            screens.Exists(obj => obj.Id == ScreenType.Reflect || obj.Id == ScreenType.AuroraVeil) ? 
-                0.5f : 1f :
-            screens.Exists(obj => obj.Id == ScreenType.LightScreen || obj.Id == ScreenType.AuroraVeil) ? 
-                0.5f : 1f;
-        float modifiers = Random.Range(0.85f, 1f) * damageDetails.TypeEffectiveness * damageDetails.Critical * stab * burn * abilities * weather * screen;
-        int offense = (move.Base.Category == MoveCategory.Physical) ?
-            (damageDetails.Critical > 1f) ?
-                RunCriticalCalculation(Stat.Attack, attacker) : attacker.Attack :
-            (damageDetails.Critical > 1f) ?
-                RunCriticalCalculation(Stat.SpAttack, attacker) : attacker.SpecialAttack;
-        int defense = (move.Base.Category == MoveCategory.Physical) ?
-            (damageDetails.Critical > 1f) ?
-                RunCriticalCalculation(Stat.Defense, this) : Defense :
-            (damageDetails.Critical > 1f) ?
-                RunCriticalCalculation(Stat.SpDefense, this) : SpecialDefense;
-        defense *= Mathf.FloorToInt((move.Base.Category == MoveCategory.Physical) ?
-            ((Base.PrimaryType == PokemonType.Ice || Base.SecondaryType == PokemonType.Ice) && weatherId == WeatherID.Hail) ? 1.5f : 1f :
-            ((Base.PrimaryType == PokemonType.Rock || Base.SecondaryType == PokemonType.Rock) && weatherId == WeatherID.Sandstorm) ? 1.5f : 1f);
-        int baseDamage = (((2 * attacker.Level / 5) + 2) * move.Base.Power * offense / defense) / 50 + 2;
-        int damage = Mathf.FloorToInt(baseDamage * modifiers);
-        return damage;
-    }
-
     public int TakeConfusionDamage()
     {
         //Applies the whole formula of damage, calculating all instances that can impact the outcome of the damage
@@ -355,51 +260,7 @@ public class Pokemon
         int damage = Mathf.FloorToInt(baseDamage * modifiers);
         return damage;
     }
-    public float OnDamageCheck(Pokemon pokemon, Move move)
-    {
-        //if the status doesn't have the OnBeforeMove Func, it will return null
-        if (Base?.Ability?.OnDamageCheck != null)
-        {
-            return Base.Ability.OnDamageCheck(this, move);
-        }
-        return 1f;
-    }
-
-    public float OnAccuracyCheck()
-    {
-        //if the pokemon ability has OnAccuracyCheck, runs it, otherwise returns 1f
-        if (Base?.Ability?.OnAccuracyCheck != null)
-        {
-            return Base.Ability.OnAccuracyCheck(this);
-        }
-        return 1f;
-    }
-
-    public bool OnPokemonSwitch(Pokemon target)
-    {
-        //if the pokemon ability has OnAccuracyCheck, runs it, otherwise returns 1f
-        if (Base?.Ability?.OnPokemonSwitch != null)
-        {
-            Base.Ability.OnPokemonSwitch(target);
-            return true;
-        }
-        return false;
-    }
-
-    public void OnContactCheck(Pokemon attacker)
-    {
-        //checks if the attacking pokemon has OnMakingContact to apply its effects
-        if (attacker.Base?.Ability?.OnMakingContact != null)
-        {
-            attacker.Base.Ability.OnMakingContact(this);
-        }
-
-        //Check if the defending pokemon has OnReceivingContact to apply its effects
-        if (Base?.Ability?.OnReceivingContact != null)
-        {
-            Base.Ability.OnReceivingContact(attacker);
-        }
-    }
+    
 
     public bool OnBeforeMove()
     {
@@ -448,12 +309,4 @@ public class Pokemon
         CureVolatileStatus();
         ResetStatBoost();
     }
-}
-
-public class DamageDetails
-{
-    public bool Fainted { get; set; }
-    public float Critical { get; set; }
-    public float TypeEffectiveness { get; set; }
-    public int HealthRestored { get; set; }
 }

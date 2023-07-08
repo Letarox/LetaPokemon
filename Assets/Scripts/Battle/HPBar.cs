@@ -33,7 +33,7 @@ public class HPBar : MonoBehaviour
         _currentHP = _hpBarSlider.value;
 
         // Calculate duration based on remaining health
-        _duration = Mathf.Lerp(20f, 40f, current / max);
+        _duration = Mathf.Lerp(18f, 25f, current / max);
 
         _timer = 0f;
 
@@ -58,7 +58,7 @@ public class HPBar : MonoBehaviour
         _currentHP = _hpBarSlider.value;
 
         // Calculate duration based on remaining health
-        _duration = Mathf.Lerp(20, 40f, current / max);
+        _duration = Mathf.Lerp(18f, 25f, current / max);
 
         _timer = 0f;
 

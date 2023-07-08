@@ -12,6 +12,7 @@ public class DialogueManager : MonoSingleton<DialogueManager>
 
     int _lineCounter;
     Dialogue _dialogue;
+    Action onDialogueFinished;
     bool _isTyping;
     WaitForEndOfFrame _frameDelay = new WaitForEndOfFrame();
 
@@ -20,11 +21,12 @@ public class DialogueManager : MonoSingleton<DialogueManager>
 
     public bool IsShowingDialogue { get; set; }
 
-    public IEnumerator ShowDialogue(Dialogue dialogue)
+    public IEnumerator ShowDialogue(Dialogue dialogue, Action onFinished = null)
     {
         yield return _frameDelay;
 
         _dialogue = dialogue;
+        onFinished = onDialogueFinished;
         if (OnShowDialogue != null)
             OnShowDialogue?.Invoke();
         IsShowingDialogue = true;
@@ -60,6 +62,8 @@ public class DialogueManager : MonoSingleton<DialogueManager>
                 _dialogueBox.SetActive(false);
                 if (OnCloseDialogue != null)
                     OnCloseDialogue?.Invoke();
+                if (onDialogueFinished != null)
+                    onDialogueFinished?.Invoke();
             }
 
         }

@@ -34,18 +34,14 @@ public class SwitchingPokemonState : BattleStateBase
 
         if (battleSystem.ActivePlayerUnit.Pokemon.HP > 0)
         {
-            yield return battleSystem.DialogueBox.TypeDialogue($"Come back {battleSystem.ActivePlayerUnit.Pokemon.Base.Name}!");
+            yield return battleSystem.DialogueBox.TypeDialogue($"Come back { battleSystem.ActivePlayerUnit.Pokemon.Base.Name }!");
             battleSystem.ActivePlayerUnit.PlayFaintAnimation();
             yield return battleSystem.FaintDelay;
         }
 
         yield return battleSystem.FaintDelay;
-        if (battleSystem.TurnOrder.Contains(battleSystem.ActivePlayerUnit))
-            battleSystem.TurnOrder.Remove(battleSystem.ActivePlayerUnit);
-        
-        battleSystem.TurnOrder.Remove(battleSystem.ActivePlayerUnit);
+
         battleSystem.ActivePlayerUnit.Setup(newPokemon);
-        battleSystem.TurnOrder.Add(battleSystem.ActivePlayerUnit);
         battleSystem.DialogueBox.SetMoveNames(newPokemon.Moves);
         yield return battleSystem.DialogueBox.TypeDialogue($"Go {newPokemon.Base.Name}!");
         yield return battleSystem.FaintDelay;
@@ -64,7 +60,7 @@ public class SwitchingPokemonState : BattleStateBase
     }
     public IEnumerator PokemonSwitchAbility(Pokemon source, Pokemon target)
     {
-        if (source.OnPokemonSwitch(target))
+        if (AbilityManager.Instance.OnPokemonEnterBattle(source, target))
         {
             battleSystem.AbilityBox.PlayAbilityEnterAnimation(source.Base.Ability.Name);
             yield return battleSystem.FaintDelay;

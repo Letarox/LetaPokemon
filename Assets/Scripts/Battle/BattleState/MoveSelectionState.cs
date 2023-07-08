@@ -49,8 +49,6 @@ public class MoveSelectionState : BattleStateBase
             battleSystem.CurrentMove = currentMove;
             battleSystem.DialogueBox.EnableMoveSelector(false);
             battleSystem.DialogueBox.EnableDialogueText(true);
-
-            battleSystem.ChosenMove = battleSystem.ActivePlayerUnit.Pokemon.Moves[currentMove];
             battleSystem.TransitionToState(BattleState.RunningTurn, () => battleSystem.StartCoroutine(runningTurnState.RunTurn()));
         }
         else if (Input.GetKeyDown(KeyCode.Escape))

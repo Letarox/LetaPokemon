@@ -60,7 +60,7 @@ public class PlayerController : MonoBehaviour
                 _character.Animator.IsMoving = false;
                 OnEncounter?.Invoke();
             }
-            _enCounter ++;
+            _enCounter++;
             Math.Clamp(_enCounter, 0, 20);
         }
         else

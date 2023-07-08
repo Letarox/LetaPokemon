@@ -4,10 +4,10 @@ using UnityEngine;
 
 public class CharacterAnimator : MonoBehaviour
 {
-    [SerializeField] List<Sprite> _walkDownSprites; 
-    [SerializeField] List<Sprite> _walkUpSprites; 
-    [SerializeField] List<Sprite> _walkRightSprites; 
-    [SerializeField] List<Sprite> _walkLeftSprites; 
+    [SerializeField] List<Sprite> _walkDownSprites;
+    [SerializeField] List<Sprite> _walkUpSprites;
+    [SerializeField] List<Sprite> _walkRightSprites;
+    [SerializeField] List<Sprite> _walkLeftSprites;
     public float MoveX { get; set; }
     public float MoveY { get; set; }
     public bool IsMoving { get; set; }

@@ -14,7 +14,7 @@ public class GameManager : MonoBehaviour
     void OnEnable()
     {
         _playerController.OnEncounter += StartBattle;
-        _battleSystem.OnBattleOver += EndBattle;        
+        _battleSystem.OnBattleOver += EndBattle;
     }
 
     void OnDisable()

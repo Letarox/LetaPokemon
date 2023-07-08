@@ -54,6 +54,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Assets\Scripts\Battle\PartyMemberUI.cs" />
+    <Compile Include="Assets\Scripts\Battle\BattleState\AfterTurnState.cs" />
     <Compile Include="Assets\Scripts\Gameplay\Dialogue.cs" />
     <Compile Include="Assets\Scripts\Data\WeatherDB.cs" />
     <Compile Include="Assets\Scripts\Character\Character.cs" />
@@ -70,7 +71,7 @@
     <Compile Include="Assets\Scripts\Gameplay\GameLayers.cs" />
     <Compile Include="Assets\Scripts\Data\AbilityDB.cs" />
     <Compile Include="Assets\Scripts\Battle\BattleDialogueBox.cs" />
-    <Compile Include="Assets\Scripts\Battle\Weather.cs" />
+    <Compile Include="Assets\Scripts\Battle\Weather\Weather.cs" />
     <Compile Include="Assets\Scripts\Battle\BattleState\BattleStateBase.cs" />
     <Compile Include="Assets\Scripts\Battle\BattleState\BattleOverState.cs" />
     <Compile Include="Assets\Scripts\Battle\BattleState\SwitchingPokemonState.cs" />
@@ -82,7 +83,7 @@
     <Compile Include="Assets\Scripts\Battle\BattleState\ActionSelectionState.cs" />
     <Compile Include="Assets\Scripts\Gameplay\MapArea.cs" />
     <Compile Include="Assets\Scripts\Pokemons\Pokemon.cs" />
-    <Compile Include="Assets\Scripts\MonoSingleton.cs" />
+    <Compile Include="Assets\Scripts\Util\MonoSingleton.cs" />
     <Compile Include="Assets\Scripts\Battle\BattleUnit.cs" />
     <Compile Include="Assets\Scripts\Battle\PartyScreen.cs" />
     <Compile Include="Assets\Scripts\Gameplay\Interactable.cs" />
@@ -93,7 +94,9 @@
     <Compile Include="Assets\Scripts\Data\ScreenDB.cs" />
     <Compile Include="Assets\Scripts\Pokemons\Condition.cs" />
     <Compile Include="Assets\Scripts\Gameplay\DialogueManager.cs" />
-    <Compile Include="Assets\Scripts\Battle\BattleState\AfterTurnState.cs" />
+    <Compile Include="Assets\Scripts\Battle\Weather\WeatherManager.cs" />
+    <Compile Include="Assets\Scripts\Battle\AbilityManager.cs" />
+    <Compile Include="Assets\Scripts\Battle\BattleCalculator.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\TextMesh Pro\Shaders\TMPro.cginc" />

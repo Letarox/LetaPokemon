@@ -145,14 +145,14 @@ public class AbilityDB
             new Ability()
             {
                 Name = "Intimidate",
-                OnPokemonSwitch = (Pokemon pokemon) =>
+                OnPokemonEnterBattle = (Pokemon pokemon) =>
                 {
                     StatBoost intimidate = new StatBoost{
                         stat = Stat.Attack,
                         boost = -1
                     };
                     
-                    if(pokemon.CanReceiveBoost(intimidate, pokemon))
+                    if(AbilityManager.Instance.CanReceiveBoost(intimidate, pokemon))
                     {
                         pokemon.ApplyBoost(intimidate);
                     }

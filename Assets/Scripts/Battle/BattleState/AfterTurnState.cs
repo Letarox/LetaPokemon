@@ -24,17 +24,20 @@ public class AfterTurnState : BattleStateBase
 
     public override void ExitState()
     {
-        battleSystem.TurnOrder.Clear();
+        
     }
     IEnumerator RunAfterTurn()
     {
         // After both moves are executed, we run the AfterTurn in order of speed
-        battleSystem.TurnOrder = SortedPokemonByEndOfTurnOrder(battleSystem.TurnOrder);
-        foreach (BattleUnit unit in battleSystem.TurnOrder)
+        battleSystem.ActivePokemon.Clear();
+        battleSystem.ActivePokemon.Add(battleSystem.ActivePlayerUnit);
+        battleSystem.ActivePokemon.Add(battleSystem.ActiveEnemyUnit);
+        battleSystem.ActivePokemon = SortedPokemonByEndOfTurnOrder(battleSystem.ActivePokemon);
+        yield return RunEffectsAfterTurn(battleSystem.ActivePokemon);
+        foreach (BattleUnit unit in battleSystem.ActivePokemon)
         {
             yield return RunStatusEffectsAfterTurn(unit);
         }
-        yield return RunEffectsAfterTurn(battleSystem.TurnOrder);
 
         // If this did not result in the end of battle, we reset the turn, allowing the player to choose a new action
         if (battleSystem.State != BattleState.BattleOver)
@@ -55,7 +58,6 @@ public class AfterTurnState : BattleStateBase
         //after the turn ends, we apply damage effect from Status Conditions and Weather Effects
         if (battleSystem.State == BattleState.BattleOver)
             yield break;
-        //yield return new WaitUntil(() => _state == BattleState.RunningTurn);
 
         sourceUnit.Pokemon.OnAfterTurn();
         yield return battleSystem.ShowStatusChanges(sourceUnit.Pokemon);
@@ -64,28 +66,7 @@ public class AfterTurnState : BattleStateBase
     }
     public IEnumerator RunEffectsAfterTurn(List<BattleUnit> units)
     {
-        if (battleSystem.CurrentWeather.Id != WeatherID.None)
-        {
-            //make sure that Environmental Weather lasts until replaced
-            if (!battleSystem.CurrentWeather.EnvironmentWeather)
-                battleSystem.CurrentWeather.Duration--;
-
-            //remove weather or run its damage
-            if (battleSystem.CurrentWeather.Duration == 0)
-            {
-                yield return battleSystem.DialogueBox.TypeDialogue(battleSystem.CurrentWeather.EndMessage);
-                battleSystem.CurrentWeather = WeatherDB.Weathers[WeatherID.None];
-                battleSystem.UpdateWeatherImage(WeatherID.None);
-            }
-            else
-            {
-                if (battleSystem.CurrentWeather?.OnAfterTurn != null)
-                {
-                    foreach (BattleUnit unit in units)
-                        yield return RunWeatherDamage(unit);
-                }
-            }
-        }
+        yield return battleSystem.WeatherManager.WeatherAfterTurn(units);
 
         //check if the player has any screen and run its dialogue
         if (battleSystem.PlayerTeam.TeamScreens.Count > 0)
@@ -115,18 +96,7 @@ public class AfterTurnState : BattleStateBase
             }
         }
     }
-    IEnumerator RunWeatherDamage(BattleUnit unit)
-    {
-        if (battleSystem.CurrentWeather.OnAfterTurn.Invoke(unit.Pokemon))
-        {
-            yield return battleSystem.ShowStatusChanges(unit.Pokemon);
-            yield return battleSystem.WeatherDelay;
-            unit.PlayHitAnimation();
-            yield return battleSystem.WeatherDelay;
-            yield return unit.Hud.UpdateLoseHP();
-            yield return battleSystem.CheckForFaint(unit);
-        }
-    }
+    
     List<BattleUnit> SortedPokemonByEndOfTurnOrder(List<BattleUnit> unitList)
     {
         // Sort the Pokémon based on priority and speed
