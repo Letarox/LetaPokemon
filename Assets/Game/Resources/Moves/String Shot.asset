@@ -10,31 +10,32 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f3fd455580c915347a65b1a45494dea9, type: 3}
-  m_Name: Struggle
+  m_Name: String Shot
   m_EditorClassIdentifier: 
-  name: Struggle
-  description: This attack is used in desperation only if the user has no remaining
-    PP. It also damages the user a little.
-  type: 1
-  category: 0
+  name: String Shot
+  description: "The user blows silk from its mouth that binds opposing Pok\xE9mon
+    and harshly lowers their Speed stats."
+  type: 7
+  category: 2
   variation: 0
   target: 0
-  power: 50
+  power: 0
   accuracy: 100
-  pp: 1
+  pp: 40
   priority: 0
   recoil: 0
-  makesContact: 1
+  makesContact: 0
   bypassAccuracy: 0
   twoTurnMove: 0
   mustRecharge: 0
   hpDrainingMove: 0
-  onCastMessage: has no moves left!
+  onCastMessage: 
   effects:
-    boosts: []
+    boosts:
+    - stat: 4
+      boost: -2
     status: 0
     volatileStatus: 0
     weatherEffect: 0
     screenType: 0
-    flinch: 0
   secondaryEffects: []

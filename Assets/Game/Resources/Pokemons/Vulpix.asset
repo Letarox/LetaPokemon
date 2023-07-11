@@ -10,29 +10,29 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 61f5797d743bf054e83a79be7b418c36, type: 3}
-  m_Name: Pikachu
+  m_Name: Vulpix
   m_EditorClassIdentifier: 
-  name: Pikachu
-  description: When it is angered, it immediately discharges the energy stored in
-    the pouches in its cheeks.
-  frontSprite: {fileID: 21300000, guid: 4343c9055693ed14bac7697570f8c555, type: 3}
-  backSprite: {fileID: 21300000, guid: b21cbfcb52b5fc94681627ec92e8de16, type: 3}
-  primaryType: 13
+  name: Vulpix
+  description: As its body grows larger, its six warm tails become more beautiful,
+    with a more luxurious coat of fur.
+  frontSprite: {fileID: 21300000, guid: 3403a03591e247e44a7c784a3f4a0a5a, type: 3}
+  backSprite: {fileID: 21300000, guid: 4926a8b696da49648ba9c67b01d882dd, type: 3}
+  primaryType: 10
   secondaryType: 0
-  ability: 5
-  maxHp: 35
-  attack: 55
+  ability: 10
+  maxHp: 38
+  attack: 41
   defense: 40
   spAttack: 50
-  spDefense: 40
-  speed: 90
+  spDefense: 65
+  speed: 65
   struggle: {fileID: 11400000, guid: c16651c43988f0e488d365a371144c8d, type: 2}
   learnableMoves:
   - moveBase: {fileID: 11400000, guid: ec818183895dba6428f258151b585913, type: 2}
     level: 1
   - moveBase: {fileID: 11400000, guid: f14268841fb87634fae3286b7187fc73, type: 2}
     level: 4
-  - moveBase: {fileID: 11400000, guid: ba2660aa4f57e454595d6eaf7c2da868, type: 2}
+  - moveBase: {fileID: 11400000, guid: ff687731333c8fc41b4d53762a09f9ec, type: 2}
     level: 7
-  - moveBase: {fileID: 11400000, guid: 432fbbb9f4be6b14e87f0d8b2b22a671, type: 2}
+  - moveBase: {fileID: 11400000, guid: e204b8bc2f594504682683642621921c, type: 2}
     level: 10

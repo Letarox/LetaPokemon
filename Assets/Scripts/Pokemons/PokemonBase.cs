@@ -23,32 +23,21 @@ public class PokemonBase : ScriptableObject
     [SerializeField] MoveBase struggle;
     [SerializeField] List<LearnableMove> learnableMoves;
 
-    public string Name { get { return name; } }
-
-    public string Description { get { return description; } }
-
-    public Sprite FrontSprite { get { return frontSprite; } }
-
-    public Sprite BackSprite { get { return backSprite; } }
-
-    public PokemonType PrimaryType { get { return primaryType; } }
-
-    public PokemonType SecondaryType { get { return secondaryType; } }
-
-    public int MaxHp { get { return maxHp; } }
-
-    public int Attack { get { return attack; } }
-
-    public int Defense { get { return defense; } }
-
-    public int SpecialAttack { get { return spAttack; } }
-
-    public int SpecialDefense { get { return spDefense; } }
-
-    public int Speed { get { return speed; } }
-    public Ability Ability { get { return AbilityDB.Abilities[ability]; } }
-    public List<LearnableMove> LearnableMoves { get { return learnableMoves; } }
-    public MoveBase Struggle { get { return struggle; } }
+    public string Name => name;
+    public string Description => description;
+    public Sprite FrontSprite => frontSprite;
+    public Sprite BackSprite => backSprite;
+    public PokemonType PrimaryType => primaryType;
+    public PokemonType SecondaryType => secondaryType;
+    public int MaxHp => maxHp;
+    public int Attack => attack;
+    public int Defense => defense;
+    public int SpecialAttack => spAttack;
+    public int SpecialDefense => spDefense;
+    public int Speed => speed;
+    public Ability Ability => AbilityDB.Abilities[ability];
+    public List<LearnableMove> LearnableMoves => learnableMoves;
+    public MoveBase Struggle => struggle;
 }
 
 [System.Serializable]
@@ -57,8 +46,8 @@ public class LearnableMove
     [SerializeField] MoveBase moveBase;
     [SerializeField] int level;
 
-    public MoveBase MoveBase { get { return moveBase; } }
-    public int Level { get { return level; } }
+    public MoveBase MoveBase => moveBase;
+    public int Level => level;
 }
 
 public enum Stat

@@ -28,6 +28,19 @@ public class WeatherManager
             yield return OnWeatherStartFinish?.Invoke(true);
         }
     }
+    public IEnumerator ChangeWeather(Weather weather)
+    {
+        if (_currentWeather != weather)
+        {
+            _currentWeather = weather;
+            _currentWeather.Duration = 5;
+            _currentWeather.EnvironmentWeather = false;
+            yield return OnWeatherMove?.Invoke(true);
+            OnWeatherChange?.Invoke(_currentWeather);
+        }
+        else
+            yield return OnWeatherMove?.Invoke(false);
+    }
     public IEnumerator WeatherMove(MoveEffects effects)
     {
         if (_currentWeather.Id != effects.WeatherEffect)
@@ -36,6 +49,7 @@ public class WeatherManager
             _currentWeather.Duration = 5;
             _currentWeather.EnvironmentWeather = false;
             yield return OnWeatherMove?.Invoke(true);
+            OnWeatherChange?.Invoke(_currentWeather);
         }
         else
             yield return OnWeatherMove?.Invoke(false);

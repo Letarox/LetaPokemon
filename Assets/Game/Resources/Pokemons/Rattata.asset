@@ -33,4 +33,6 @@ MonoBehaviour:
   - moveBase: {fileID: 11400000, guid: f14268841fb87634fae3286b7187fc73, type: 2}
     level: 4
   - moveBase: {fileID: 11400000, guid: ff687731333c8fc41b4d53762a09f9ec, type: 2}
-    level: 5
+    level: 7
+  - moveBase: {fileID: 11400000, guid: 29c00866c9e4d6e4eb2b82f0328982ae, type: 2}
+    level: 10

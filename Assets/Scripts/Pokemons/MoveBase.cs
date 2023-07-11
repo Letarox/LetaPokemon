@@ -27,30 +27,29 @@ public class MoveBase : ScriptableObject
     [SerializeField] MoveEffects effects;    
     [SerializeField] List<SecondaryEffects> secondaryEffects;
 
-    public string Name { get { return name; } }
-    public string Description { get { return description; } }
-    public PokemonType Type { get { return type; } }
-    public MoveCategory Category { get { return category; } }
-    public MoveVariation Variation { get { return variation; } }
-    public MoveTarget Target { get { return target; } }    
-    public int Power { get { return power; } }
-    public int Accuracy { get { return accuracy; } }
-    public int PP { get { return pp; } }
-    public int Priority { get { return priority; } }
-    public int Recoil { get { return recoil; } }
-    public bool MakesContact { get { return makesContact; } }
-    public bool BypassAccuracy { get { return bypassAccuracy; } }
-    public bool TwoTurnMove { get { return twoTurnMove; } }
-    public bool MustRecharge { get { return mustRecharge; } }
-    public bool HPDrainingMove { get { return hpDrainingMove; } }
-    public string OnCastMessage { get { return onCastMessage; } }
-    public MoveEffects Effects { get { return effects; } }    
-    public List<SecondaryEffects> SecondaryEffects { get { return secondaryEffects; } }
-   
+    public string Name => name;
+    public string Description => description;
+    public PokemonType Type => type;
+    public MoveCategory Category => category;
+    public MoveVariation Variation => variation;
+    public MoveTarget Target => target;
+    public int Power => power;
+    public int Accuracy => accuracy;
+    public int PP => pp;
+    public int Priority => priority;
+    public int Recoil => recoil;
+    public bool MakesContact => makesContact;
+    public bool BypassAccuracy => bypassAccuracy;
+    public bool TwoTurnMove => twoTurnMove;
+    public bool MustRecharge => mustRecharge;
+    public bool HPDrainingMove => hpDrainingMove;
+    public string OnCastMessage => onCastMessage;
+    public MoveEffects Effects => effects;
+    public List<SecondaryEffects> SecondaryEffects => secondaryEffects;
 }
 
 public enum MoveCategory { Physical, Special, Status }
-public enum MoveVariation { None, Slicing, Punch, Spore, Claw }
+public enum MoveVariation { None, Slicing, Punch, Spore, Claw, Biting }
 public enum MoveTarget { Foe, Self }
 
 [System.Serializable]
@@ -61,12 +60,14 @@ public class MoveEffects
     [SerializeField] ConditionID volatileStatus;
     [SerializeField] WeatherID weatherEffect;
     [SerializeField] ScreenType screenType;
+    [SerializeField] bool flinch;
 
-    public List<StatBoost> Boosts { get { return boosts; } }
-    public ConditionID Status { get { return status; } }
-    public ConditionID VolatileStatus { get { return volatileStatus; } }
-    public WeatherID WeatherEffect { get { return weatherEffect; } }
-    public ScreenType ScreenType { get { return screenType; } }
+    public List<StatBoost> Boosts => boosts;
+    public ConditionID Status => status;
+    public ConditionID VolatileStatus => volatileStatus;
+    public WeatherID WeatherEffect => weatherEffect;
+    public ScreenType ScreenType => screenType;
+    public bool Flinch => flinch;
 }
 
 [System.Serializable]
@@ -75,13 +76,15 @@ public class SecondaryEffects : MoveEffects
     [SerializeField] int procChance;
     [SerializeField] MoveTarget target;
 
-    public int ProcChance{ get { return procChance; } }
-    public MoveTarget Target{ get { return target; } }
+    public int ProcChance => procChance;
+    public MoveTarget Target => target;
 }
 
 [System.Serializable]
-public class StatBoost 
+public class StatBoost
 {
-    public Stat stat;
-    public int boost;
+    [SerializeField] private Stat stat;
+    [SerializeField] private int boost;
+    public Stat Stat { get { return stat; } set { stat = value; } }
+    public int Boost { get { return boost; } set { boost = value; } }
 }

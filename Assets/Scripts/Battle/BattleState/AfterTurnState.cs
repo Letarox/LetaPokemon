@@ -14,7 +14,7 @@ public class AfterTurnState : BattleStateBase
     }
     public override void EnterState()
     {
-        battleSystem.StartCoroutine(RunAfterTurn());
+        battleSystem.UIBattleManager.StartCoroutine(RunAfterTurn());
     }
 
     public override void UpdateState()
@@ -30,8 +30,8 @@ public class AfterTurnState : BattleStateBase
     {
         // After both moves are executed, we run the AfterTurn in order of speed
         battleSystem.ActivePokemon.Clear();
-        battleSystem.ActivePokemon.Add(battleSystem.ActivePlayerUnit);
-        battleSystem.ActivePokemon.Add(battleSystem.ActiveEnemyUnit);
+        battleSystem.ActivePokemon.Add(battleSystem.UIBattleManager.ActivePlayerUnit);
+        battleSystem.ActivePokemon.Add(battleSystem.UIBattleManager.ActiveEnemyUnit);
         battleSystem.ActivePokemon = SortedPokemonByEndOfTurnOrder(battleSystem.ActivePokemon);
         yield return RunEffectsAfterTurn(battleSystem.ActivePokemon);
         foreach (BattleUnit unit in battleSystem.ActivePokemon)
@@ -42,10 +42,10 @@ public class AfterTurnState : BattleStateBase
         // If this did not result in the end of battle, we reset the turn, allowing the player to choose a new action
         if (battleSystem.State != BattleState.BattleOver)
         {
-            if (battleSystem.ActivePlayerUnit.Pokemon.TwoTurnMove || battleSystem.ActivePlayerUnit.Pokemon.MustRecharge)
+            if (battleSystem.UIBattleManager.ActivePlayerUnit.Pokemon.TwoTurnMove || battleSystem.UIBattleManager.ActivePlayerUnit.Pokemon.MustRecharge)
             {
-                yield return battleSystem.AttackDelay;
-                battleSystem.TransitionToState(BattleState.RunningTurn, () => battleSystem.StartCoroutine(runningTurnState.SwitchPokemonTurn()));
+                yield return battleSystem.UIBattleManager.AttackDelay;
+                battleSystem.TransitionToState(BattleState.RunningTurn, () => battleSystem.UIBattleManager.StartCoroutine(runningTurnState.SwitchPokemonTurn()));
             }
             else
             {
@@ -60,41 +60,16 @@ public class AfterTurnState : BattleStateBase
             yield break;
 
         sourceUnit.Pokemon.OnAfterTurn();
-        yield return battleSystem.ShowStatusChanges(sourceUnit.Pokemon);
+        yield return battleSystem.UIBattleManager.ShowStatusChanges(sourceUnit.Pokemon);
         yield return sourceUnit.Hud.UpdateLoseHP();
         yield return battleSystem.CheckForFaint(sourceUnit);
+        sourceUnit.Pokemon.Flinched = false;
     }
     public IEnumerator RunEffectsAfterTurn(List<BattleUnit> units)
     {
-        yield return battleSystem.WeatherManager.WeatherAfterTurn(units);
-
-        //check if the player has any screen and run its dialogue
-        if (battleSystem.PlayerTeam.TeamScreens.Count > 0)
-        {
-            foreach (Screen screen in battleSystem.PlayerTeam.TeamScreens)
-            {
-                screen.Duration--;
-                if (screen.Duration == 0)
-                {
-                    yield return battleSystem.DialogueBox.TypeDialogue(screen.PlayerEndMessage);
-                    battleSystem.PlayerTeam.TeamScreens.Remove(screen);
-                }
-            }
-        }
-
-        //check if the enemy has any screen and run its dialogue
-        if (battleSystem.EnemyTeam.TeamScreens.Count > 0)
-        {
-            foreach (Screen screen in battleSystem.EnemyTeam.TeamScreens)
-            {
-                screen.Duration--;
-                if (screen.Duration == 0)
-                {
-                    yield return battleSystem.DialogueBox.TypeDialogue(screen.EnemyEndMessage);
-                    battleSystem.EnemyTeam.TeamScreens.Remove(screen);
-                }
-            }
-        }
+        //Run the after turn for both Weather and Screens
+        yield return battleSystem.WeatherManager.WeatherAfterTurn(units);        
+        yield return battleSystem.ScreensAfterTurn();
     }
     
     List<BattleUnit> SortedPokemonByEndOfTurnOrder(List<BattleUnit> unitList)
@@ -108,7 +83,7 @@ public class AfterTurnState : BattleStateBase
                 return speedComparison;
 
             // If there is a speed tie, randomly decide the order
-            return UnityEngine.Random.Range(0, 2) == 0 ? -1 : 1;
+            return Random.Range(0, 2) == 0 ? -1 : 1;
         });
 
         return unitList;

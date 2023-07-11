@@ -12,9 +12,9 @@ public class ActionSelectionState : BattleStateBase
     public override void EnterState()
     {
         // Set up the initial state when entering the ActionState
-        battleSystem.DialogueBox.SetDialogue("Choose an action.");
-        battleSystem.DialogueBox.EnableActionSelector(true);
-        battleSystem.DialogueBox.EnableDialogueText(true);
+        battleSystem.UIBattleManager.DialogueBox.SetDialogue("Choose an action.");
+        battleSystem.UIBattleManager.DialogueBox.EnableActionSelector(true);
+        battleSystem.UIBattleManager.DialogueBox.EnableDialogueText(true);
         currentAction = battleSystem.CurrentAction;
     }
 
@@ -32,7 +32,7 @@ public class ActionSelectionState : BattleStateBase
 
         currentAction = Mathf.Clamp(currentAction, 0, 3);
 
-        battleSystem.DialogueBox.UpdateActionSelection(currentAction);
+        battleSystem.UIBattleManager.DialogueBox.UpdateActionSelection(currentAction);
 
         if (Input.GetKeyDown(KeyCode.X))
         {
@@ -59,7 +59,7 @@ public class ActionSelectionState : BattleStateBase
 
     public override void ExitState()
     {
-        battleSystem.DialogueBox.EnableActionSelector(false);
-        battleSystem.CurrentAction = currentAction;
+        battleSystem.UIBattleManager.DialogueBox.EnableActionSelector(false);
+        battleSystem.CurrentAction = currentAction;        
     }
 }

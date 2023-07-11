@@ -97,6 +97,7 @@
     <Compile Include="Assets\Scripts\Battle\Weather\WeatherManager.cs" />
     <Compile Include="Assets\Scripts\Battle\AbilityManager.cs" />
     <Compile Include="Assets\Scripts\Battle\BattleCalculator.cs" />
+    <Compile Include="Assets\Scripts\Battle\UIBattleManager.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\TextMesh Pro\Shaders\TMPro.cginc" />

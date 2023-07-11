@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Text;
 using TMPro;
 using UnityEngine;
 
@@ -24,13 +25,20 @@ public class BattleDialogueBox : MonoBehaviour
 
     public IEnumerator TypeDialogue(string dialogue)
     {
+        if (dialogue == null)
+            yield break;
+
         _dialogueText.text = string.Empty;
-        foreach(char letter in dialogue.ToCharArray())
+
+        StringBuilder stringBuilder = new StringBuilder();
+
+        foreach (char letter in dialogue)
         {
-            _dialogueText.text += letter;
+            stringBuilder.Append(letter);
+            _dialogueText.text = stringBuilder.ToString();
+
             yield return new WaitForSeconds(1f / _lettersPerSecond);
         }
-
         yield return _dialogueDelay;
     }
 

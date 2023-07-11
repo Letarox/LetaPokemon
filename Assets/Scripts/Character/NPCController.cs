@@ -37,9 +37,6 @@ public class NPCController : MonoBehaviour, Interactable
 
     void Update()
     {
-        if (DialogueManager.Instance.IsShowingDialogue)
-            return;
-
         if (GameManager.gameState != GameState.FreeRoam)
             return;
 

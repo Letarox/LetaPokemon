@@ -19,7 +19,7 @@ public class RunningTurnState : BattleStateBase
     }
     public override void ExitState()
     {
-
+        
     }
     List<BattleUnit> SortedPokemonByTurnOrder(List<BattleUnit> unitList)
     {
@@ -87,24 +87,24 @@ public class RunningTurnState : BattleStateBase
     public IEnumerator RunTurn()
     {
         // We grab a handle of each move chosen by both the player and the enemy
-        if (!battleSystem.ActivePlayerUnit.Pokemon.TwoTurnMove || !battleSystem.ActivePlayerUnit.Pokemon.MustRecharge)
-            battleSystem.ActivePlayerUnit.Pokemon.CurrentMove = battleSystem.ActivePlayerUnit.Pokemon.Moves[battleSystem.CurrentMove];
-        if (!battleSystem.ActiveEnemyUnit.Pokemon.TwoTurnMove || !battleSystem.ActiveEnemyUnit.Pokemon.MustRecharge)
-            battleSystem.ActiveEnemyUnit.Pokemon.CurrentMove = battleSystem.ActiveEnemyUnit.Pokemon.GetRandomMove();
+        if (!battleSystem.UIBattleManager.ActivePlayerUnit.Pokemon.TwoTurnMove || !battleSystem.UIBattleManager.ActivePlayerUnit.Pokemon.MustRecharge)
+            battleSystem.UIBattleManager.ActivePlayerUnit.Pokemon.CurrentMove = battleSystem.UIBattleManager.ActivePlayerUnit.Pokemon.Moves[battleSystem.CurrentMove];
+        if (!battleSystem.UIBattleManager.ActiveEnemyUnit.Pokemon.TwoTurnMove || !battleSystem.UIBattleManager.ActiveEnemyUnit.Pokemon.MustRecharge)
+            battleSystem.UIBattleManager.ActiveEnemyUnit.Pokemon.CurrentMove = battleSystem.UIBattleManager.ActiveEnemyUnit.Pokemon.GetRandomMove();
 
         // We check who goes first based on speed. In case of a speed-tie, we randomize who goes first. Then a handle of each unit is also set
         battleSystem.TurnOrder.Clear();
-        battleSystem.TurnOrder.Add(battleSystem.ActivePlayerUnit);
-        battleSystem.TurnOrder.Add(battleSystem.ActiveEnemyUnit);
+        battleSystem.TurnOrder.Add(battleSystem.UIBattleManager.ActivePlayerUnit);
+        battleSystem.TurnOrder.Add(battleSystem.UIBattleManager.ActiveEnemyUnit);
         battleSystem.TurnOrder = SortedPokemonByTurnOrder(battleSystem.TurnOrder);
         foreach(BattleUnit unit in battleSystem.TurnOrder)
         {
             if(unit.Pokemon.HP > 0)
             {
                 if (unit.IsPlayerTeam)
-                    yield return RunMove(battleSystem.ActivePlayerUnit, battleSystem.ActiveEnemyUnit, battleSystem.ActivePlayerUnit.Pokemon.CurrentMove);
+                    yield return RunMove(battleSystem.UIBattleManager.ActivePlayerUnit, battleSystem.UIBattleManager.ActiveEnemyUnit, battleSystem.UIBattleManager.ActivePlayerUnit.Pokemon.CurrentMove);
                 else
-                    yield return RunMove(battleSystem.ActiveEnemyUnit, battleSystem.ActivePlayerUnit, battleSystem.ActiveEnemyUnit.Pokemon.CurrentMove);
+                    yield return RunMove(battleSystem.UIBattleManager.ActiveEnemyUnit, battleSystem.UIBattleManager.ActivePlayerUnit, battleSystem.UIBattleManager.ActiveEnemyUnit.Pokemon.CurrentMove);
                 if (battleSystem.State == BattleState.BattleOver)
                     yield break;
             }
@@ -114,8 +114,8 @@ public class RunningTurnState : BattleStateBase
     public IEnumerator SwitchPokemonTurn()
     {
         // We execute the enemy move after the player has changed to its new pokemon
-        Move enemyMove = battleSystem.ActiveEnemyUnit.Pokemon.GetRandomMove();
-        yield return RunMove(battleSystem.ActiveEnemyUnit, battleSystem.ActivePlayerUnit, enemyMove);
+        Move enemyMove = battleSystem.UIBattleManager.ActiveEnemyUnit.Pokemon.GetRandomMove();
+        yield return RunMove(battleSystem.UIBattleManager.ActiveEnemyUnit, battleSystem.UIBattleManager.ActivePlayerUnit, enemyMove);
 
         battleSystem.TransitionToState(BattleState.AfterTurn);
     }
@@ -131,21 +131,30 @@ public class RunningTurnState : BattleStateBase
     {
         if (move == null)
             yield break;
+        
         //check if the pokemon can act that turn before the move is called. In case it can't, it shows its dialogue updates and if it died due to confusion
         if (!sourceUnit.Pokemon.OnBeforeMove())
         {
-            yield return battleSystem.ShowStatusChanges(sourceUnit.Pokemon);
+            yield return battleSystem.UIBattleManager.ShowStatusChanges(sourceUnit.Pokemon);
             yield return sourceUnit.Hud.UpdateLoseHP();
             yield return battleSystem.CheckForFaint(sourceUnit);
             yield break;
         }
+        //check if the pokemon is flinched and cannot act
+        if (sourceUnit.Pokemon.Flinched)
+        {
+            sourceUnit.Pokemon.Flinched = false;
+            yield return battleSystem.UIBattleManager.DialogueBox.TypeDialogue($"{ sourceUnit.Pokemon.Base.Name } flinched!");
+            yield break;
+        }
+
         //display message if the pokemon wakes up or is no longer confused
-        yield return battleSystem.ShowStatusChanges(sourceUnit.Pokemon);
+        yield return battleSystem.UIBattleManager.ShowStatusChanges(sourceUnit.Pokemon);
         //check if the target has its MustRecharge set to true, therefore recharging and cancelling his turn after the message is displayed
         if (sourceUnit.Pokemon.MustRecharge)
         {
             sourceUnit.Pokemon.MustRecharge = false;
-            yield return battleSystem.DialogueBox.TypeDialogue($"{ sourceUnit.Pokemon.Base.Name } { move.Base.OnCastMessage }");
+            yield return battleSystem.UIBattleManager.DialogueBox.TypeDialogue($"{ sourceUnit.Pokemon.Base.Name } { move.Base.OnCastMessage }");
             yield break;
         }
 
@@ -156,11 +165,11 @@ public class RunningTurnState : BattleStateBase
         if (sourceUnit.Pokemon.TwoTurnMove || !move.Base.TwoTurnMove)
         {
             if (move.Base.Name == "Struggle")
-                yield return battleSystem.DialogueBox.TypeDialogue($"{ sourceUnit.Pokemon.Base.Name } { move.Base.OnCastMessage} ");
-            yield return battleSystem.DialogueBox.TypeDialogue($"{ sourceUnit.Pokemon.Base.Name } used { move.Base.Name }.");
+                yield return battleSystem.UIBattleManager.DialogueBox.TypeDialogue($"{ sourceUnit.Pokemon.Base.Name } { move.Base.OnCastMessage} ");
+            yield return battleSystem.UIBattleManager.DialogueBox.TypeDialogue($"{ sourceUnit.Pokemon.Base.Name } used { move.Base.Name }.");
         }
         else
-            yield return battleSystem.DialogueBox.TypeDialogue($"{ sourceUnit.Pokemon.Base.Name } { move.Base.OnCastMessage }");
+            yield return battleSystem.UIBattleManager.DialogueBox.TypeDialogue($"{ sourceUnit.Pokemon.Base.Name } { move.Base.OnCastMessage }");
 
         //check if the pokemon has hit its target
         if (battleSystem.BattleCalculator.AccuracyCheck(move, sourceUnit.Pokemon, targetUnit.Pokemon))
@@ -170,14 +179,14 @@ public class RunningTurnState : BattleStateBase
             {
                 sourceUnit.Pokemon.TwoTurnMove = true;
                 sourceUnit.PlayTwoTurnAnimation(true);
-                yield return battleSystem.AttackDelay;
+                yield return battleSystem.UIBattleManager.AttackDelay;
                 yield break;
             }
 
             //if the target is immune to the move type, returns the dialogue and ends the move
             if (TargetIsImmune(targetUnit.Pokemon, move))
             {
-                yield return battleSystem.DialogueBox.TypeDialogue($"It doesn't affect enemy { targetUnit.Pokemon.Base.Name }.");
+                yield return battleSystem.UIBattleManager.DialogueBox.TypeDialogue($"It doesn't affect enemy { targetUnit.Pokemon.Base.Name }.");
                 yield break;
             }
 
@@ -186,7 +195,7 @@ public class RunningTurnState : BattleStateBase
                 sourceUnit.PlayTwoTurnAnimation(false);
             else
                 sourceUnit.PlayAttackAnimation();
-            yield return battleSystem.AttackDelay;
+            yield return battleSystem.UIBattleManager.AttackDelay;
 
             //check which type of move is being used
             if (move.Base.Category == MoveCategory.Status)
@@ -222,8 +231,8 @@ public class RunningTurnState : BattleStateBase
         else
         {
             //in case of miss, display the message and return
-            yield return battleSystem.DialogueBox.TypeDialogue($"{ sourceUnit.Pokemon.Base.Name }'s attack missed!");
-            yield return battleSystem.AttackDelay;
+            yield return battleSystem.UIBattleManager.DialogueBox.TypeDialogue($"{ sourceUnit.Pokemon.Base.Name }'s attack missed!");
+            yield return battleSystem.UIBattleManager.AttackDelay;
         }
     }
     IEnumerator RunMoveEffects(MoveEffects effects, MoveTarget moveTarget, BattleUnit sourceUnit, Pokemon target, bool secondaryEffect)
@@ -248,19 +257,24 @@ public class RunningTurnState : BattleStateBase
             if (target.VolatileStatus == null)
                 target.SetVolatileStatus(effects.VolatileStatus);
             else if (!secondaryEffect)
-                yield return battleSystem.DialogueBox.TypeDialogue("But it failed!");
+                yield return battleSystem.UIBattleManager.DialogueBox.TypeDialogue("But it failed!");
         }
 
         //Run the weather effects and apply any effects as applicabe
         if (effects.WeatherEffect != WeatherID.None)
         {
-            yield return battleSystem.WeatherManager.WeatherMove(effects);
+            yield return battleSystem.WeatherManager.ChangeWeather(WeatherDB.Weathers[effects.WeatherEffect]);
         }
 
         //Run the screen's effect
         if (effects.ScreenType != ScreenType.None)
         {
             yield return ScreenMove(effects, sourceUnit);
+        }
+
+        if (effects.Flinch && AbilityManager.Instance.OnFlinch(target))
+        {
+            target.Flinched = true;
         }
 
         //Display message for both Pokemon according to their Status
@@ -291,32 +305,32 @@ public class RunningTurnState : BattleStateBase
     IEnumerator HPDrainingMove(BattleUnit sourceUnit, int healthRestored)
     {
         //update the HP and display the "energy drained" message on the ShowStatusChanges
-        yield return battleSystem.FaintDelay;
+        yield return battleSystem.UIBattleManager.FaintDelay;
         yield return sourceUnit.Hud.UpdateRegainHP(healthRestored);
-        yield return battleSystem.ShowStatusChanges(sourceUnit.Pokemon);
+        yield return battleSystem.UIBattleManager.ShowStatusChanges(sourceUnit.Pokemon);
     }
     IEnumerator ApplyRecoil(BattleUnit sourceUnit)
     {
         //Update the HP and display the "was damaged by recoil" message on the ShowStatusChanges
         yield return sourceUnit.Hud.UpdateLoseHP();
-        yield return battleSystem.ShowStatusChanges(sourceUnit.Pokemon);
+        yield return battleSystem.UIBattleManager.ShowStatusChanges(sourceUnit.Pokemon);
     }
     IEnumerator ApplyContact(Pokemon source, Pokemon target)
     {
         //check if any pokemon has contact effects and apply such
         AbilityManager.Instance.OnContactCheck(source, target);
         if (target.StatusChanges.Count > 0)
-            yield return battleSystem.ShowStatusChanges(target);
+            yield return battleSystem.UIBattleManager.ShowStatusChanges(target);
         if (source.StatusChanges.Count > 0)
-            yield return battleSystem.ShowStatusChanges(source);
+            yield return battleSystem.UIBattleManager.ShowStatusChanges(source);
     }
     IEnumerator DisplayMessageBothPokemon(Pokemon source, Pokemon target)
     {
         //check if any pokemon has any status changes messages and display them
         if (source.StatusChanges.Count > 0)
-            yield return battleSystem.ShowStatusChanges(source);
+            yield return battleSystem.UIBattleManager.ShowStatusChanges(source);
         if (target.StatusChanges.Count > 0)
-            yield return battleSystem.ShowStatusChanges(target);
+            yield return battleSystem.UIBattleManager.ShowStatusChanges(target);
     }
     IEnumerator ApplyBoostEffects(MoveEffects effects, MoveTarget moveTarget, Pokemon source, Pokemon target)
     {
@@ -327,7 +341,7 @@ public class RunningTurnState : BattleStateBase
                 if (AbilityManager.Instance.CanReceiveBoost(statBoost, target))
                 {
                     target.ApplyBoost(statBoost);
-                    yield return battleSystem.ShowStatusChanges(target);
+                    yield return battleSystem.UIBattleManager.ShowStatusChanges(target);
                 }
             }
         }
@@ -336,7 +350,7 @@ public class RunningTurnState : BattleStateBase
             foreach (StatBoost statBoost in effects.Boosts)
             {
                 source.ApplyBoost(statBoost);
-                yield return battleSystem.ShowStatusChanges(source);
+                yield return battleSystem.UIBattleManager.ShowStatusChanges(source);
             }
         }
     }
@@ -348,18 +362,18 @@ public class RunningTurnState : BattleStateBase
                 target.SetStatus(effects.Status);
             else
                 if (!secondaryEffect)
-                yield return battleSystem.DialogueBox.TypeDialogue($"It doesn't affect enemy { target.Base.Name }.");
+                yield return battleSystem.UIBattleManager.DialogueBox.TypeDialogue($"It doesn't affect enemy { target.Base.Name }.");
         }
         else
                 if (!secondaryEffect)
-            yield return battleSystem.DialogueBox.TypeDialogue("But it failed!");
+            yield return battleSystem.UIBattleManager.DialogueBox.TypeDialogue("But it failed!");
     }
     
     IEnumerator ScreenMove(MoveEffects effects, BattleUnit sourceUnit)
     {
         if (effects.ScreenType == ScreenType.AuroraVeil && battleSystem.WeatherManager.CurrentWeather.Id != WeatherID.Hail)
         {
-            yield return battleSystem.DialogueBox.TypeDialogue("But it failed!");
+            yield return battleSystem.UIBattleManager.DialogueBox.TypeDialogue("But it failed!");
             yield break;
         }
 
@@ -367,25 +381,25 @@ public class RunningTurnState : BattleStateBase
         {
             if (battleSystem.PlayerTeam.TeamScreens.Exists(obj => obj.Id == effects.ScreenType))
             {
-                yield return battleSystem.DialogueBox.TypeDialogue("But it failed!");
+                yield return battleSystem.UIBattleManager.DialogueBox.TypeDialogue("But it failed!");
                 yield break;
             }
 
             battleSystem.PlayerTeam.TeamScreens.Add(ScreenDB.Screens[effects.ScreenType]);
             battleSystem.PlayerTeam.TeamScreens[battleSystem.PlayerTeam.TeamScreens.Count - 1].Duration = 5;
-            yield return battleSystem.DialogueBox.TypeDialogue(battleSystem.PlayerTeam.TeamScreens[battleSystem.PlayerTeam.TeamScreens.Count - 1].PlayerStartMessage);
+            yield return battleSystem.UIBattleManager.DialogueBox.TypeDialogue(battleSystem.PlayerTeam.TeamScreens[battleSystem.PlayerTeam.TeamScreens.Count - 1].PlayerStartMessage);
         }
         else
         {
             if (battleSystem.EnemyTeam.TeamScreens.Exists(obj => obj.Id == effects.ScreenType))
             {
-                yield return battleSystem.DialogueBox.TypeDialogue("But it failed!");
+                yield return battleSystem.UIBattleManager.DialogueBox.TypeDialogue("But it failed!");
                 yield break;
             }
 
             battleSystem.EnemyTeam.TeamScreens.Add(ScreenDB.Screens[effects.ScreenType]);
             battleSystem.EnemyTeam.TeamScreens[battleSystem.EnemyTeam.TeamScreens.Count - 1].Duration = 5;
-            yield return battleSystem.DialogueBox.TypeDialogue(battleSystem.EnemyTeam.TeamScreens[battleSystem.EnemyTeam.TeamScreens.Count - 1].EnemyStartMessage);
+            yield return battleSystem.UIBattleManager.DialogueBox.TypeDialogue(battleSystem.EnemyTeam.TeamScreens[battleSystem.EnemyTeam.TeamScreens.Count - 1].EnemyStartMessage);
         }
     }
     
@@ -393,15 +407,15 @@ public class RunningTurnState : BattleStateBase
     {
         //Display damage details according to Crit/Effectiveness
         if (damageDetails.Critical > 1f)
-            yield return battleSystem.DialogueBox.TypeDialogue("A critical hit!");
+            yield return battleSystem.UIBattleManager.DialogueBox.TypeDialogue("A critical hit!");
         if (damageDetails.TypeEffectiveness == 1f)
-            yield return null;
+            yield break;
         else
         {
             if (damageDetails.TypeEffectiveness > 1f)
-                yield return battleSystem.DialogueBox.TypeDialogue("Its super effective!");
+                yield return battleSystem.UIBattleManager.DialogueBox.TypeDialogue("Its super effective!");
             else
-                yield return battleSystem.DialogueBox.TypeDialogue("Its not very effective.");
+                yield return battleSystem.UIBattleManager.DialogueBox.TypeDialogue("Its not very effective.");
         }
     }
 }

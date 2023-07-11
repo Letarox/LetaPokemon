@@ -25,28 +25,28 @@ public class SwitchingPokemonState : BattleStateBase
 
     public override void ExitState()
     {
-
+        
     }
     public IEnumerator SwitchPokemon(Pokemon newPokemon)
     {
-        battleSystem.ActivePlayerUnit.ReAppearUnit();
-        battleSystem.ActiveEnemyUnit.ReAppearUnit();
+        battleSystem.UIBattleManager.ActivePlayerUnit.ReAppearUnit();
+        battleSystem.UIBattleManager.ActiveEnemyUnit.ReAppearUnit();
 
-        if (battleSystem.ActivePlayerUnit.Pokemon.HP > 0)
+        if (battleSystem.UIBattleManager.ActivePlayerUnit.Pokemon.HP > 0)
         {
-            yield return battleSystem.DialogueBox.TypeDialogue($"Come back { battleSystem.ActivePlayerUnit.Pokemon.Base.Name }!");
-            battleSystem.ActivePlayerUnit.PlayFaintAnimation();
-            yield return battleSystem.FaintDelay;
+            yield return battleSystem.UIBattleManager.DialogueBox.TypeDialogue($"Come back { battleSystem.UIBattleManager.ActivePlayerUnit.Pokemon.Base.Name }!");
+            battleSystem.UIBattleManager.ActivePlayerUnit.PlayFaintAnimation();
+            yield return battleSystem.UIBattleManager.FaintDelay;
         }
 
-        yield return battleSystem.FaintDelay;
+        yield return battleSystem.UIBattleManager.FaintDelay;
 
-        battleSystem.ActivePlayerUnit.Setup(newPokemon);
-        battleSystem.DialogueBox.SetMoveNames(newPokemon.Moves);
-        yield return battleSystem.DialogueBox.TypeDialogue($"Go {newPokemon.Base.Name}!");
-        yield return battleSystem.FaintDelay;
+        battleSystem.UIBattleManager.ActivePlayerUnit.Setup(newPokemon);
+        battleSystem.UIBattleManager.DialogueBox.SetMoveNames(newPokemon.Moves);
+        yield return battleSystem.UIBattleManager.DialogueBox.TypeDialogue($"Go {newPokemon.Base.Name}!");
+        yield return battleSystem.UIBattleManager.FaintDelay;
 
-        yield return PokemonSwitchAbility(battleSystem.ActivePlayerUnit.Pokemon, battleSystem.ActiveEnemyUnit.Pokemon);
+        yield return PokemonSwitchAbility(battleSystem.UIBattleManager.ActivePlayerUnit.Pokemon, battleSystem.UIBattleManager.ActiveEnemyUnit.Pokemon);
 
         if (battleSystem.PreState == BattleState.ActionSelection)
         {
@@ -62,12 +62,11 @@ public class SwitchingPokemonState : BattleStateBase
     {
         if (AbilityManager.Instance.OnPokemonEnterBattle(source, target))
         {
-            battleSystem.AbilityBox.PlayAbilityEnterAnimation(source.Base.Ability.Name);
-            yield return battleSystem.FaintDelay;
-            yield return battleSystem.ShowStatusChanges(target);
-            yield return battleSystem.AttackDelay;
-            battleSystem.AbilityBox.PlayAbilityExitAnimation();
+            battleSystem.UIBattleManager.AbilityBox.PlayAbilityEnterAnimation(source.Base.Ability.Name);
+            yield return battleSystem.UIBattleManager.AttackDelay;
+            yield return battleSystem.UIBattleManager.ShowStatusChanges(target);
+            yield return battleSystem.UIBattleManager.AttackDelay;
+            battleSystem.UIBattleManager.AbilityBox.PlayAbilityExitAnimation();
         }
-        yield break;
     }
 }

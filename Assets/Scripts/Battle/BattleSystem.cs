@@ -12,14 +12,10 @@ public class Team
 }
 public class BattleSystem : MonoBehaviour
 {
-    [SerializeField] BattleUnit _playerUnit, _enemyUnit;
-    [SerializeField] BattleDialogueBox _dialogueBox;
-    [SerializeField] BattleAbilityBox _abilityBox;
-    [SerializeField] PartyScreen _partyScreen;
-    [SerializeField] SpriteRenderer _weatherImage;
-    [SerializeField] List<Sprite> _weathers;
+    [SerializeField] UIBattleManager _uiBattleManager;
 
     public event Action<bool> OnBattleOver;
+    public event Action OnBattleStart;
 
     BattleState _state;
     BattleState? _preState;
@@ -28,9 +24,6 @@ public class BattleSystem : MonoBehaviour
     int _currentMember;
     WeatherManager _weatherManager = new WeatherManager();
     BattleCalculator _battleCalculator = new BattleCalculator();
-
-    WaitUntil _pressAnyKeyToContinue, _waitUntilRunningTurn;
-    WaitForSeconds _attackDelay, _faintDelay, _weatherDelay;
 
     PokemonParty _playerParty;
     Pokemon _wildPokemon;
@@ -44,18 +37,7 @@ public class BattleSystem : MonoBehaviour
     private RunningTurnState _runningTurnState;
     private List<BattleUnit> _turnOrder;
     private List<BattleUnit> _activePokemon;
-
-    public BattleUnit ActivePlayerUnit => _playerUnit;
-    public BattleUnit ActiveEnemyUnit => _enemyUnit;
-    public BattleDialogueBox DialogueBox => _dialogueBox;
-    public BattleAbilityBox AbilityBox => _abilityBox;
-    public PartyScreen PartyScreen => _partyScreen;
-    public SpriteRenderer WeatherImage => _weatherImage;
-    public List<Sprite> Weathers => _weathers;
-    public WaitForSeconds AttackDelay => _attackDelay;
-    public WaitForSeconds FaintDelay => _faintDelay;
-    public WaitForSeconds WeatherDelay => _weatherDelay;
-    public WaitUntil WaintUntilRunningTurn => _waitUntilRunningTurn;
+    public UIBattleManager UIBattleManager => _uiBattleManager;
     public WeatherManager WeatherManager => _weatherManager;
     public BattleCalculator BattleCalculator => _battleCalculator;
     public BattleStateBase CurrentState { get; private set; }
@@ -72,21 +54,13 @@ public class BattleSystem : MonoBehaviour
     public List<BattleUnit> ActivePokemon { get { return _activePokemon; } set { _activePokemon = value; } }
     void Start()
     {
-        _pressAnyKeyToContinue = new WaitUntil(() => Input.GetKeyDown(KeyCode.X));
-        _waitUntilRunningTurn = new WaitUntil(() => _state == BattleState.RunningTurn);
-        _attackDelay = new WaitForSeconds(1.5f);
-        _faintDelay = new WaitForSeconds(1f);
-        _weatherDelay = new WaitForSeconds(0.25f);
         _partyScreenState = new PartyScreenState(this);
         _runningTurnState = new RunningTurnState(this);
         _busyState = new SwitchingPokemonState(this);
         _battleOverState = new BattleOverState(this);
         _turnOrder = new List<BattleUnit>();
         _activePokemon = new List<BattleUnit>();
-        _weatherManager.OnWeatherChange += UpdateWeatherImage;
-        _weatherManager.OnWeatherStartFinish += WeatherStartFinish;
-        _weatherManager.OnWeatherDamage += WeatherDamageText;
-        _weatherManager.OnWeatherMove += WeatherMove;
+        AbilityManager.Instance.SetWeatherManager(_weatherManager);
         _stateDictionary = new Dictionary<BattleState, BattleStateBase>
         {
             { BattleState.ActionSelection, new ActionSelectionState(this) },
@@ -132,33 +106,23 @@ public class BattleSystem : MonoBehaviour
         _wildPokemon = wildPokemon;
         _currentAction = 0;
         _currentMove = 0;
-        UpdateWeatherImage(environmentWeather);
-        StartCoroutine(SetupBattle(environmentWeather));        
+        _uiBattleManager.UpdateWeatherImage(environmentWeather);
+        StartCoroutine(SetupBattle(environmentWeather));
+        OnBattleStart?.Invoke();
     }
 
     public IEnumerator SetupBattle(Weather environmentWeather)
     {
-        SetupPlayerParty();
-        SetupEnemyPokemon();
+        _uiBattleManager.SetupPlayerParty();
+        _uiBattleManager.SetupEnemyPokemon(_wildPokemon);
 
-        yield return _dialogueBox.TypeDialogue($"A wild { _enemyUnit.Pokemon.Base.Name } appeared.");
-        yield return _faintDelay;
+        yield return _uiBattleManager.DialogueBox.TypeDialogue($"A wild { _uiBattleManager.ActiveEnemyUnit.Pokemon.Base.Name } appeared.");
+        yield return _uiBattleManager.FaintDelay;
         yield return _weatherManager.SetInitialWeather(environmentWeather);
-        yield return _busyState.PokemonSwitchAbility(_playerUnit.Pokemon, _enemyUnit.Pokemon);
-        yield return _busyState.PokemonSwitchAbility(_enemyUnit.Pokemon, _playerUnit.Pokemon);
+        yield return _busyState.PokemonSwitchAbility(_uiBattleManager.ActivePlayerUnit.Pokemon, _uiBattleManager.ActiveEnemyUnit.Pokemon);
+        yield return _busyState.PokemonSwitchAbility(_uiBattleManager.ActiveEnemyUnit.Pokemon, _uiBattleManager.ActivePlayerUnit.Pokemon);
 
         TransitionToState(BattleState.ActionSelection);
-    }
-
-    private void SetupPlayerParty()
-    {
-        _playerUnit.Setup(_playerParty.GetHealthyPokemon());
-        _dialogueBox.SetMoveNames(_playerUnit.Pokemon.Moves);
-    }
-
-    private void SetupEnemyPokemon()
-    {
-        _enemyUnit.Setup(_wildPokemon);
     }
     public void HandleUpdate()
     {
@@ -185,60 +149,45 @@ public class BattleSystem : MonoBehaviour
             if (ActivePokemon.Contains(unit))
                 ActivePokemon.Remove(unit);
             unit.PlayFaintAnimation();
-            yield return _faintDelay;
-            yield return _dialogueBox.TypeDialogue($"{ unit.Pokemon.Base.Name } has fainted.");
-            yield return _pressAnyKeyToContinue;
+            yield return _uiBattleManager.FaintDelay;
+            yield return _uiBattleManager.DialogueBox.TypeDialogue($"{ unit.Pokemon.Base.Name } has fainted.");
+            yield return _uiBattleManager.PressAnyKeyToContinue;
             TransitionToState(BattleState.BattleOver);
         }
     }
-
-    public void UpdateWeatherImage(Weather weather)
+    public IEnumerator ScreensAfterTurn()
     {
-        _weatherImage.sprite = _weathers[(int)weather.Id];
-    }
-
-    IEnumerator WeatherStartFinish(bool isStarting)
-    {
-        //if the weather is starting, display start message. Otherwise display end message
-        if (isStarting)
-            yield return _dialogueBox.TypeDialogue(_weatherManager.CurrentWeather.StartMessage);
-        else
-            yield return _dialogueBox.TypeDialogue(_weatherManager.CurrentWeather.EndMessage);
-    }
-    IEnumerator WeatherMove(bool castSuccess)
-    {
-        //if the weather is not the same as the move weather effect, the cast is sucessful and display the proper message. Otherwise the cast fails
-        if(castSuccess)
-            yield return _dialogueBox.TypeDialogue(_weatherManager.CurrentWeather.CastMessage);
-        else
-            yield return _dialogueBox.TypeDialogue("But it failed!");
-    }
-    IEnumerator WeatherDamageText(BattleUnit unit)
-    {
-        yield return ShowStatusChanges(unit.Pokemon);
-        yield return WeatherDelay;
-        unit.PlayHitAnimation();
-        yield return WeatherDelay;
-        yield return unit.Hud.UpdateLoseHP();
-        yield return CheckForFaint(unit);
-    }
-
-    public IEnumerator ShowStatusChanges(Pokemon pokemon)
-    {
-        //Dequeues the list of messages of status changes for the pokemon
-        while(pokemon.StatusChanges.Count > 0)
+        if (_playerTeam.TeamScreens.Count > 0)
         {
-            string message = pokemon.StatusChanges.Dequeue();
-            yield return _dialogueBox.TypeDialogue(message);
+            foreach (Screen screen in _playerTeam.TeamScreens)
+            {
+                screen.Duration--;
+                if (screen.Duration == 0)
+                {
+                    yield return UIBattleManager.DialogueBox.TypeDialogue(screen.PlayerEndMessage);
+                    _playerTeam.TeamScreens.Remove(screen);
+                }
+            }
+        }
+
+        //check if the enemy has any screen and run its dialogue
+        if (_enemyTeam.TeamScreens.Count > 0)
+        {
+            foreach (Screen screen in _enemyTeam.TeamScreens)
+            {
+                screen.Duration--;
+                if (screen.Duration == 0)
+                {
+                    yield return UIBattleManager.DialogueBox.TypeDialogue(screen.EnemyEndMessage);
+                    _enemyTeam.TeamScreens.Remove(screen);
+                }
+            }
         }
     }
-
     public void RaiseBattleOverEvent(bool won)
     {
         //unsubscribe to all events from the weather when the battle is over, and invoke the onbattleover
-        _weatherManager.OnWeatherChange -= UpdateWeatherImage;
-        _weatherManager.OnWeatherStartFinish -= WeatherStartFinish;
-        _weatherManager.OnWeatherDamage -= WeatherDamageText;
+        _uiBattleManager.BattleOver(won);
         OnBattleOver?.Invoke(won);
     }
 }

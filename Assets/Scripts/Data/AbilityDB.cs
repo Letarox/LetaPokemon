@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public class AbilityDB
-{
+{    
     public static void Init()
     {
         foreach (KeyValuePair<AbilityID, Ability> keyValuePair in Abilities)
@@ -110,7 +110,7 @@ public class AbilityDB
                 Name = "Keen Eye",
                 OnStatsChange = (StatBoost statBoost, Pokemon pokemon) =>
                 {
-                    if(statBoost.stat == Stat.Accuracy && statBoost.boost < 0)
+                    if(statBoost.Stat == Stat.Accuracy && statBoost.Boost < 0)
                     {
                         pokemon.StatusChanges.Enqueue("Keen Eye prevents the loss of accuracy!");
                         return false;
@@ -148,10 +148,10 @@ public class AbilityDB
                 OnPokemonEnterBattle = (Pokemon pokemon) =>
                 {
                     StatBoost intimidate = new StatBoost{
-                        stat = Stat.Attack,
-                        boost = -1
+                        Stat = Stat.Attack,
+                        Boost = -1
                     };
-                    
+
                     if(AbilityManager.Instance.CanReceiveBoost(intimidate, pokemon))
                     {
                         pokemon.ApplyBoost(intimidate);
@@ -160,6 +160,30 @@ public class AbilityDB
                     {
                         pokemon.StatusChanges.Enqueue($"{ pokemon.Base.Name } cannot have its Attack reduced!");
                     }
+                }
+            }
+        },
+        {
+            AbilityID.Drought,
+            new Ability()
+            {
+                Name = "Drought",
+                OnPokemonEnterBattle = (Pokemon pokemon) =>
+                {
+                    AbilityManager.Instance.StartCoroutine(AbilityManager.Instance.WeatherManager.ChangeWeather(WeatherDB.Weathers[WeatherID.Sunny]));
+                }
+            }
+        },
+        {
+            AbilityID.InnerFocus,
+            new Ability()
+            {
+                Name = "Inner Focus",
+                OnFlinch = (Pokemon pokemon) =>
+                {
+                    if(pokemon.Base.Ability == AbilityDB.Abilities[AbilityID.InnerFocus])
+                        return false;
+                    return true;
                 }
             }
         }
@@ -177,5 +201,7 @@ public enum AbilityID
     KeenEye,
     Guts,
     Overcoat,
-    Intimidate
+    Intimidate,
+    Drought,
+    InnerFocus
 }

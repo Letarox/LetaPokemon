@@ -19,9 +19,9 @@ public class MoveSelectionState : BattleStateBase
     public override void EnterState()
     {
         // Set up the initial state when entering the MoveSelectionState
-        battleSystem.DialogueBox.EnableActionSelector(false);
-        battleSystem.DialogueBox.EnableDialogueText(false);
-        battleSystem.DialogueBox.EnableMoveSelector(true);
+        battleSystem.UIBattleManager.DialogueBox.EnableActionSelector(false);
+        battleSystem.UIBattleManager.DialogueBox.EnableDialogueText(false);
+        battleSystem.UIBattleManager.DialogueBox.EnableMoveSelector(true);
         currentMove = battleSystem.CurrentMove;
     }
 
@@ -37,18 +37,18 @@ public class MoveSelectionState : BattleStateBase
         else if (Input.GetKeyDown(KeyCode.UpArrow))
             currentMove -= 2;
 
-        currentMove = Mathf.Clamp(currentMove, 0, battleSystem.ActivePlayerUnit.Pokemon.Moves.Count - 1);
+        currentMove = Mathf.Clamp(currentMove, 0, battleSystem.UIBattleManager.ActivePlayerUnit.Pokemon.Moves.Count - 1);
 
-        battleSystem.DialogueBox.UpdateMoveSelection(currentMove, battleSystem.ActivePlayerUnit.Pokemon.Moves[currentMove], battleSystem.ActiveEnemyUnit.Pokemon);
+        battleSystem.UIBattleManager.DialogueBox.UpdateMoveSelection(currentMove, battleSystem.UIBattleManager.ActivePlayerUnit.Pokemon.Moves[currentMove], battleSystem.UIBattleManager.ActiveEnemyUnit.Pokemon);
 
         if (Input.GetKeyDown(KeyCode.X))
         {
-            if (battleSystem.ActivePlayerUnit.Pokemon.Moves[currentMove].PP == 0)
+            if (battleSystem.UIBattleManager.ActivePlayerUnit.Pokemon.Moves[currentMove].PP == 0)
                 return;
 
             battleSystem.CurrentMove = currentMove;
-            battleSystem.DialogueBox.EnableMoveSelector(false);
-            battleSystem.DialogueBox.EnableDialogueText(true);
+            battleSystem.UIBattleManager.DialogueBox.EnableMoveSelector(false);
+            battleSystem.UIBattleManager.DialogueBox.EnableDialogueText(true);
             battleSystem.TransitionToState(BattleState.RunningTurn, () => battleSystem.StartCoroutine(runningTurnState.RunTurn()));
         }
         else if (Input.GetKeyDown(KeyCode.Escape))
@@ -60,7 +60,7 @@ public class MoveSelectionState : BattleStateBase
 
     public override void ExitState()
     {
-        battleSystem.DialogueBox.EnableMoveSelector(false);
+        battleSystem.UIBattleManager.DialogueBox.EnableMoveSelector(false);
         battleSystem.CurrentMove = currentMove;
     }
 }

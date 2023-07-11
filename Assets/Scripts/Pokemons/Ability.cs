@@ -16,5 +16,6 @@ public class Ability
     public Func<Pokemon, float> OnAccuracyCheck { get; set; }
     public Func<Pokemon, float> OnEvasionCheck { get; set; }
     public Func<StatBoost, Pokemon, bool> OnStatsChange { get; set; }
+    public Func<Pokemon, bool> OnFlinch { get; set; }
     public Action<Pokemon> OnAfterTurn { get; set; }
 }

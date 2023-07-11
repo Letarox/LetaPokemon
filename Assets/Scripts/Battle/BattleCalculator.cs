@@ -37,7 +37,7 @@ public class BattleCalculator
         //Clamps the accuracy to at least 33% of the move accuracy, and maximum of 3x its accuracy
         return (UnityEngine.Random.Range(1.00f, 100.00f) <= Math.Clamp(move.Base.Accuracy * source.Accuracy * target.Evasion * AbilityManager.Instance.OnAccuracyCheck(source) * AbilityManager.Instance.OnEvasionCheck(target), move.Base.Accuracy * 0.33f, move.Base.Accuracy * 3f)) ? true : false;
     }
-    public int DamageCalculation(Move move, Pokemon attacker, Pokemon defender, WeatherID weatherId, DamageDetails damageDetails, List<Screen> screens)
+    public int DamageCalculation(Move move, Pokemon attacker, Pokemon defender, WeatherID weatherId, DamageDetails damageDetails, List<Screen> screens = null)
     {
         //Applies the whole formula of damage, calculating all instances that can impact the outcome of the damage
         float stab = (attacker.Base.PrimaryType == move.Base.Type || attacker.Base.SecondaryType == move.Base.Type) ? 1.5f : 1f;
@@ -68,7 +68,7 @@ public class BattleCalculator
         int damage = Mathf.FloorToInt(baseDamage * modifiers);
         return damage;
     }
-    public DamageDetails ApplyDamage(Move move, Pokemon attacker, Pokemon defender, WeatherID weatherId, List<Screen> screens)
+    public DamageDetails ApplyDamage(Move move, Pokemon attacker, Pokemon defender, WeatherID weatherId, List<Screen> screens = null)
     {
         DamageDetails damageDetails = new DamageDetails()
         {
@@ -78,8 +78,12 @@ public class BattleCalculator
         int damage = DamageCalculation(move, attacker, defender, weatherId, damageDetails, screens);
 
         //if struggle damages the attacker for a 1/4 of their health
-        if (move.Base.name == "Struggle")
+        if (move.Base.Name == "Struggle")
+        {
             attacker.UpdateHP(Mathf.FloorToInt(attacker.MaxHp / 4));
+            attacker.StatusChanges.Enqueue($"{ attacker.Base.Name } is damaged by recoil!");
+        }
+           
 
         //if the move is a HP Draining Move, apply the amount of health to be restored and adds the message to be displayed
         if (move.Base.HPDrainingMove)

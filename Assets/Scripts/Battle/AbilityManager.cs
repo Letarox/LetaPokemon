@@ -4,6 +4,12 @@ using UnityEngine;
 
 public class AbilityManager : MonoSingleton<AbilityManager>
 {
+    private WeatherManager _weatherManager;
+    public WeatherManager WeatherManager => _weatherManager;
+    public void SetWeatherManager(WeatherManager weatherManager)
+    {
+        _weatherManager = weatherManager;
+    }
     public bool CanReceiveBoost(StatBoost statBoost, Pokemon pokemon)
     {
         //check if the target has an ability with OnStatsChange and if it does, allows the ability to check if the current stat can be changed
@@ -52,6 +58,15 @@ public class AbilityManager : MonoSingleton<AbilityManager>
             return true;
         }
         return false;
+    }
+
+    public bool OnFlinch(Pokemon pokemon)
+    {
+        if(pokemon.Base?.Ability?.OnFlinch != null)
+        {
+            return pokemon.Base.Ability.OnFlinch(pokemon);
+        }
+        return true;
     }
 
     public void OnContactCheck(Pokemon attacker, Pokemon defender)

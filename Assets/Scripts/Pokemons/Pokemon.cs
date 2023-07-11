@@ -9,8 +9,8 @@ public class Pokemon
     [SerializeField] PokemonBase _base;
     [SerializeField] int level;
 
-    public PokemonBase Base { get { return _base; } }
-    public int Level { get { return level; } }
+    public PokemonBase Base => _base;
+    public int Level => level;
     public int HP { get; set; }
     public List<Move> Moves { get; set; }
     public Move CurrentMove { get; set; }
@@ -23,18 +23,19 @@ public class Pokemon
     public Queue<string> StatusChanges { get; private set; } = new Queue<string>();
     public bool HPChanged { get; set; }
     public bool CanAttack { get; set; }
+    public bool Flinched { get; set; }
     public event System.Action<Condition> OnStatusChanged;
     public bool TwoTurnMove { get; set; }
     public bool MustRecharge { get; set; }
     public int MaxHp { get; private set; }
-    public int Attack { get { return GetStat(Stat.Attack); } }
-    public int Defense { get { return GetStat(Stat.Defense); } }
-    public int SpecialAttack { get { return GetStat(Stat.SpAttack); } }
-    public int SpecialDefense { get { return GetStat(Stat.SpDefense); } }
-    public int Speed { get { return GetStat(Stat.Speed); } }
-    public float Accuracy { get { return GetAccuracyEvasion(Stat.Accuracy); } }
-    public float Evasion { get { return GetAccuracyEvasion(Stat.Evasiveness); } }
-    public float Critical { get { return GetCritChance(Stat.Critical); } }
+    public int Attack => GetStat(Stat.Attack);
+    public int Defense => GetStat(Stat.Defense);
+    public int SpecialAttack => GetStat(Stat.SpAttack);
+    public int SpecialDefense => GetStat(Stat.SpDefense);
+    public int Speed => GetStat(Stat.Speed);
+    public float Accuracy => GetAccuracyEvasion(Stat.Accuracy);
+    public float Evasion => GetAccuracyEvasion(Stat.Evasiveness);
+    public float Critical => GetCritChance(Stat.Critical);
 
     public void Init()
     {
@@ -56,6 +57,7 @@ public class Pokemon
         CanAttack = true;
         TwoTurnMove = false;
         MustRecharge = false;
+        Flinched = false;
     }
 
     void CalculateStats()
@@ -146,8 +148,8 @@ public class Pokemon
     {
         //check for all the possible stat boosts from a move. Individually it provides the message on the amount of stat changes the move made. 
         //If the affected stat is at its maximum stat (-6/6) returns the message that it couldn't update it. The stat is later clamped to make sure it will never be lower than -6 or higher than 6
-        Stat stat = statBoost.stat;
-        int boost = statBoost.boost;
+        Stat stat = statBoost.Stat;
+        int boost = statBoost.Boost;
 
         if ((boost > 0 && StatsBoost[stat] < 6) || (boost < 0 && StatsBoost[stat] > -6))
         {
@@ -208,7 +210,6 @@ public class Pokemon
 
         return true;
     }
-    
 
     public void SetStatus(ConditionID conditionID)
     {
@@ -226,6 +227,11 @@ public class Pokemon
         //Removes the current Status Condition and invokes the OnStatusChanged for UI Update
         Status = null;
         OnStatusChanged?.Invoke(null);
+    }
+
+    public void CureFlinch()
+    {
+        Flinched = false;
     }
     public void SetVolatileStatus(ConditionID conditionID)
     {
