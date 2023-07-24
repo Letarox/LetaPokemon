@@ -76,7 +76,7 @@ public class PlayerController : MonoBehaviour
         if (collider != null)
         {
             _character.Animator.IsMoving = false;
-            collider.GetComponent<Interactable>()?.Interact();
+            collider.GetComponent<Interactable>()?.Interact(transform);
         }
     }
 }

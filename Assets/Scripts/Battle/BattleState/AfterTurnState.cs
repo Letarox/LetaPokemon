@@ -32,9 +32,9 @@ public class AfterTurnState : BattleStateBase
         battleSystem.ActivePokemon.Clear();
         battleSystem.ActivePokemon.Add(battleSystem.UIBattleManager.ActivePlayerUnit);
         battleSystem.ActivePokemon.Add(battleSystem.UIBattleManager.ActiveEnemyUnit);
-        battleSystem.ActivePokemon = SortedPokemonByEndOfTurnOrder(battleSystem.ActivePokemon);
+        battleSystem.ActivePokemon = SortedPokemonBySpeed(battleSystem.ActivePokemon);
         yield return RunEffectsAfterTurn(battleSystem.ActivePokemon);
-        foreach (BattleUnit unit in battleSystem.ActivePokemon)
+        foreach (var unit in battleSystem.ActivePokemon)
         {
             yield return RunStatusEffectsAfterTurn(unit);
         }
@@ -72,7 +72,7 @@ public class AfterTurnState : BattleStateBase
         yield return battleSystem.ScreensAfterTurn();
     }
     
-    List<BattleUnit> SortedPokemonByEndOfTurnOrder(List<BattleUnit> unitList)
+    public List<BattleUnit> SortedPokemonBySpeed(List<BattleUnit> unitList)
     {
         // Sort the Pokémon based on priority and speed
         unitList.Sort((a, b) =>

@@ -88,62 +88,67 @@ public enum PokemonType
 
 public class TypeChart
 {
-    static float[][] chart =
+    static readonly Dictionary<(PokemonType, PokemonType), float> typeEffectivenessChart = new Dictionary<(PokemonType, PokemonType), float>
     {
-        //                            NORMAL      FIGHTING        FLYING      POISON      GROUND      ROCK        BUG     GHOST       STEEL       FIRE        WATER       GRASS       ELECTRIC    PSYCHIC     ICE     DRAGON      DARK        FAIRY
-        /* NORMAL */    new float[] { 1f,         1f,             1f,         1f,         1f,         0.5f,       1f,     0f,         0.5f,       1f,         1f,         1f,         1f,         1f,         1f,     1f,         1f,         1f },
-        /* FIGHTING */  new float[] { 2f,         1f,             0.5f,       0.5f,       1f,         2f,         0.5f,   0f,         2f,         1f,         1f,         1f,         1f,         0.5f,       2f,     1f,         2f,         0.5f },
-        /* FLYING */    new float[] { 1f,         2f,             1f,         1f,         1f,         0.5f,       2f,     1f,         0.5f,       1f,         1f,         2f,         0.5f,       1f,         1f,     1f,         1f,         1f },
-        /* POISON */    new float[] { 1f,         1f,             1f,         0.5f,       0.5f,       0.5f,       1f,     0.5f,       0f,         1f,         1f,         2f,         1f,         1f,         1f,     1f,         1f,         2f },
-        /* GROUND */    new float[] { 1f,         1f,             0f,         2f,         1f,         2f,         0.5f,   1f,         2f,         2f,         1f,         0.5f,       2f,         1f,         1f,     1f,         1f,         1f },
-        /* ROCK */      new float[] { 1f,         0.5f,           2f,         1f,         0.5f,       1f,         2f,     1f,         0.5f,       2f,         1f,         1f,         1f,         1f,         2f,     1f,         1f,         1f },
-        /* BUG */       new float[] { 1f,         0.5f,           0.5f,       0.5f,       1f,         1f,         1f,     0.5f,       0.5f,       0.5f,       1f,         2f,         1f,         2f,         1f,     1f,         2f,         0.5f },
-        /* GHOST */     new float[] { 0f,         1f,             1f,         1f,         1f,         1f,         1f,     2f,         1f,         1f,         1f,         1f,         1f,         2f,         1f,     1f,         0.5f,       1f },
-        /* STEEL */     new float[] { 1f,         1f,             1f,         1f,         1f,         2f,         1f,     1f,         0.5f,       0.5f,       0.5f,       1f,         0.5f,       1f,         2f,     1f,         1f,         2f },
-        /* FIRE */      new float[] { 1f,         1f,             1f,         1f,         1f,         0.5f,       2f,     1f,         2f,         0.5f,       0.5f,       2f,         1f,         1f,         2f,     0.5f,       1f,         1f },
-        /* WATER */     new float[] { 1f,         1f,             1f,         1f,         2f,         2f,         1f,     1f,         1f,         2f,         0.5f,       0.5f,       1f,         1f,         1f,     0.5f,       1f,         1f },
-        /* GRASS */     new float[] { 1f,         1f,             0.5f,       0.5f,       2f,         2f,         0.5f,   1f,         0.5f,       0.5f,       2f,         0.5f,       1f,         1f,         1f,     0.5f,       1f,         1f },
-        /* ELECTRIC */  new float[] { 1f,         1f,             2f,         1f,         0f,         1f,         1f,     1f,         1f,         1f,         2f,         0.5f,       0.5f,       1f,         1f,     0.5f,       1f,         1f },
-        /* PSYCHIC */   new float[] { 1f,         2f,             1f,         2f,         1f,         1f,         1f,     1f,         0.5f,       1f,         1f,         1f,         1f,         0.5f,       1f,     1f,         0f,         1f },
-        /* ICE */       new float[] { 1f,         1f,             2f,         1f,         2f,         1f,         1f,     1f,         0.5f,       0.5f,       0.5f,       2f,         1f,         1f,         0.5f,   2f,         1f,         1f },
-        /* DRAGON */    new float[] { 1f,         1f,             1f,         1f,         1f,         1f,         1f,     1f,         0.5f,       1f,         1f,         1f,         1f,         1f,         1f,     2f,         1f,         0f },
-        /* DARK */      new float[] { 1f,         0.5f,           1f,         1f,         1f,         1f,         1f,     2f,         1f,         1f,         1f,         1f,         1f,         2f,         1f,     1f,         0.5f,       0.5f },
-        /* FAIRY */     new float[] { 1f,         2f,             1f,         0.5f,       1f,         1f,         1f,     1f,         0.5f,       0.5f,       1f,         1f,         1f,         1f,         1f,     2f,         2f,         1f }
+        { (PokemonType.Normal, PokemonType.Rock), 0.5f }, { (PokemonType.Normal, PokemonType.Ghost), 0f }, { (PokemonType.Normal, PokemonType.Steel), 0.5f },
+        { (PokemonType.Fighting, PokemonType.Normal), 2f }, { (PokemonType.Fighting, PokemonType.Flying), 0.5f }, { (PokemonType.Fighting, PokemonType.Poison), 0.5f }, { (PokemonType.Fighting, PokemonType.Rock), 2f }, { (PokemonType.Fighting, PokemonType.Bug), 0.5f }, { (PokemonType.Fighting, PokemonType.Ghost), 0f }, { (PokemonType.Fighting, PokemonType.Steel), 2f }, { (PokemonType.Fighting, PokemonType.Psychic), 0.5f }, { (PokemonType.Fighting, PokemonType.Ice), 2f }, { (PokemonType.Fighting, PokemonType.Dark), 2f }, { (PokemonType.Fighting, PokemonType.Fairy), 0.5f },
+        { (PokemonType.Flying, PokemonType.Fighting), 2f }, { (PokemonType.Flying, PokemonType.Rock), 0.5f }, { (PokemonType.Flying, PokemonType.Bug), 2f }, { (PokemonType.Flying, PokemonType.Steel), 0.5f }, { (PokemonType.Flying, PokemonType.Grass), 2f }, { (PokemonType.Flying, PokemonType.Electric), 0.5f },
+        { (PokemonType.Poison, PokemonType.Poison), 0.5f }, { (PokemonType.Poison, PokemonType.Ground), 0.5f }, { (PokemonType.Poison, PokemonType.Rock), 0.5f }, { (PokemonType.Poison, PokemonType.Ghost), 0.5f }, { (PokemonType.Poison, PokemonType.Steel), 0f }, { (PokemonType.Poison, PokemonType.Grass), 2f }, { (PokemonType.Poison, PokemonType.Fairy), 2f },
+        { (PokemonType.Ground, PokemonType.Flying), 0f }, { (PokemonType.Ground, PokemonType.Poison), 2f }, { (PokemonType.Ground, PokemonType.Rock), 2f }, { (PokemonType.Ground, PokemonType.Bug), 0.5f }, { (PokemonType.Ground, PokemonType.Steel), 2f }, { (PokemonType.Ground, PokemonType.Fire), 2f }, { (PokemonType.Ground, PokemonType.Grass), 0.5f }, { (PokemonType.Ground, PokemonType.Electric), 2f },
+        { (PokemonType.Rock, PokemonType.Fighting), 0.5f }, { (PokemonType.Rock, PokemonType.Flying), 2f }, { (PokemonType.Rock, PokemonType.Ground), 0.5f }, { (PokemonType.Rock, PokemonType.Bug), 2f }, { (PokemonType.Rock, PokemonType.Steel), 0.5f }, { (PokemonType.Rock, PokemonType.Fire), 2f }, { (PokemonType.Rock, PokemonType.Ice), 2f },
+        { (PokemonType.Bug, PokemonType.Fighting), 0.5f }, { (PokemonType.Bug, PokemonType.Flying), 0.5f }, { (PokemonType.Bug, PokemonType.Poison), 0.5f }, { (PokemonType.Bug, PokemonType.Ghost), 0.5f }, { (PokemonType.Bug, PokemonType.Steel), 0.5f }, { (PokemonType.Bug, PokemonType.Fire), 0.5f }, { (PokemonType.Bug, PokemonType.Grass), 2f }, { (PokemonType.Bug, PokemonType.Psychic), 2f }, { (PokemonType.Bug, PokemonType.Dark), 2f }, { (PokemonType.Bug, PokemonType.Fairy), 0.5f },
+        { (PokemonType.Ghost, PokemonType.Normal), 0f }, { (PokemonType.Ghost, PokemonType.Ghost), 2f }, { (PokemonType.Ghost, PokemonType.Psychic), 2f }, { (PokemonType.Ghost, PokemonType.Dark), 0.5f },
+        { (PokemonType.Steel, PokemonType.Rock), 2f }, { (PokemonType.Steel, PokemonType.Steel), 0.5f }, { (PokemonType.Steel, PokemonType.Fire), 0.5f }, { (PokemonType.Steel, PokemonType.Water), 0.5f }, { (PokemonType.Steel, PokemonType.Electric), 0.5f }, { (PokemonType.Steel, PokemonType.Ice), 2f }, { (PokemonType.Steel, PokemonType.Fairy), 2f },        
+        { (PokemonType.Fire, PokemonType.Rock), 0.5f }, { (PokemonType.Fire, PokemonType.Bug), 2f }, { (PokemonType.Fire, PokemonType.Steel), 2f }, { (PokemonType.Fire, PokemonType.Fire), 0.5f }, { (PokemonType.Fire, PokemonType.Water), 0.5f }, { (PokemonType.Fire, PokemonType.Grass), 2f }, { (PokemonType.Fire, PokemonType.Ice), 2f }, { (PokemonType.Fire, PokemonType.Dragon), 0.5f },
+        { (PokemonType.Water, PokemonType.Ground), 2f }, { (PokemonType.Water, PokemonType.Rock), 2f }, { (PokemonType.Water, PokemonType.Fire), 2f }, { (PokemonType.Water, PokemonType.Water), 0.5f }, { (PokemonType.Water, PokemonType.Grass), 0.5f }, { (PokemonType.Water, PokemonType.Dragon), 0.5f },
+        { (PokemonType.Grass, PokemonType.Flying), 0.5f }, { (PokemonType.Grass, PokemonType.Poison), 0.5f }, { (PokemonType.Grass, PokemonType.Ground), 2f }, { (PokemonType.Grass, PokemonType.Rock), 2f }, { (PokemonType.Grass, PokemonType.Bug), 0.5f }, { (PokemonType.Grass, PokemonType.Steel), 0.5f }, { (PokemonType.Grass, PokemonType.Fire), 0.5f }, { (PokemonType.Grass, PokemonType.Water), 2f }, { (PokemonType.Grass, PokemonType.Grass), 0.5f }, { (PokemonType.Grass, PokemonType.Dragon), 0.5f },
+        { (PokemonType.Electric, PokemonType.Flying), 2f }, { (PokemonType.Electric, PokemonType.Ground), 0f }, { (PokemonType.Electric, PokemonType.Water), 2f }, { (PokemonType.Electric, PokemonType.Grass), 0.5f }, { (PokemonType.Electric, PokemonType.Electric), 0.5f }, { (PokemonType.Electric, PokemonType.Dragon), 0.5f },
+        { (PokemonType.Psychic, PokemonType.Fighting), 2f }, { (PokemonType.Psychic, PokemonType.Poison), 2f }, { (PokemonType.Psychic, PokemonType.Steel), 0.5f }, { (PokemonType.Psychic, PokemonType.Psychic), 0.5f }, { (PokemonType.Psychic, PokemonType.Dark), 0f },
+        { (PokemonType.Ice, PokemonType.Flying), 2f }, { (PokemonType.Ice, PokemonType.Ground), 2f }, { (PokemonType.Ice, PokemonType.Steel), 0.5f }, { (PokemonType.Ice, PokemonType.Fire), 0.5f }, { (PokemonType.Ice, PokemonType.Water), 0.5f }, { (PokemonType.Ice, PokemonType.Grass), 2f }, { (PokemonType.Ice, PokemonType.Ice), 0.5f }, { (PokemonType.Ice, PokemonType.Dragon), 2f },
+        { (PokemonType.Dragon, PokemonType.Steel), 0.5f }, { (PokemonType.Dragon, PokemonType.Dragon), 2f }, { (PokemonType.Dragon, PokemonType.Fairy), 0f },
+        { (PokemonType.Dark, PokemonType.Fighting), 0.5f }, { (PokemonType.Dark, PokemonType.Ghost), 2f }, { (PokemonType.Dark, PokemonType.Psychic), 2f }, { (PokemonType.Dark, PokemonType.Dark), 0.5f }, { (PokemonType.Dark, PokemonType.Fairy), 0.5f },
+        { (PokemonType.Fairy, PokemonType.Fighting), 2f }, { (PokemonType.Fairy, PokemonType.Poison), 0.5f }, { (PokemonType.Fairy, PokemonType.Steel), 0.5f }, { (PokemonType.Fairy, PokemonType.Fire), 0.5f }, { (PokemonType.Fairy, PokemonType.Dragon), 2f }, { (PokemonType.Fairy, PokemonType.Dark), 2f }
     };
 
     public static float GetEffectiveness(PokemonType attackType, PokemonType defenseType)
     {
-        if (attackType == PokemonType.None || defenseType == PokemonType.None)
-            return 1f;
+        if (typeEffectivenessChart.TryGetValue((attackType, defenseType), out var effectiveness))
+            return effectiveness;
 
-        int row = (int)attackType - 1;
-        int col = (int)defenseType - 1;
-
-        return chart[row][col];
+        return 1f;
     }
 
-    //                                         NORMAL              FIGHTING            FLYING              POISON              GROUND              ROCK                BUG                 GHOST               STEEL               FIRE                WATER               GRASS               ELECTRIC            PSYCHIC             ICE                 DRAGON              DARK                FAIRY
-    static ConditionID[] conditionImmunity = { ConditionID.None,   ConditionID.None,   ConditionID.None,   ConditionID.PSN,    ConditionID.None,   ConditionID.None,   ConditionID.None,   ConditionID.None,   ConditionID.PSN,    ConditionID.None,   ConditionID.None,   ConditionID.None,   ConditionID.PAR,    ConditionID.None,   ConditionID.FRZ,    ConditionID.None,   ConditionID.None,   ConditionID.None };
+    static readonly Dictionary<PokemonType, ConditionID> conditionImmunityChart = new Dictionary<PokemonType, ConditionID>
+    {
+        { PokemonType.Poison, ConditionID.PSN },
+        { PokemonType.Steel, ConditionID.PSN },
+        { PokemonType.Fire, ConditionID.BRN },
+        { PokemonType.Electric, ConditionID.PAR },
+        { PokemonType.Ice, ConditionID.FRZ }
+    };
+
     public static ConditionID GetConditionImmunity(PokemonType defenseType)
     {
-        if (defenseType == PokemonType.None)
-            return ConditionID.None;
+        if (conditionImmunityChart.TryGetValue(defenseType, out var conditionID))
+            return conditionID;
 
-        int col = (int)defenseType - 1;
-
-        return conditionImmunity[col];
+        return ConditionID.None;
     }
 
-    //                                           NORMAL          FIGHTING        FLYING          POISON          GROUND               ROCK                   BUG             GHOST           STEEL                   FIRE            WATER           GRASS           ELECTRIC        PSYCHIC         ICE             DRAGON          DARK            FAIRY
-    static WeatherID[] weathersImmunityChart = { WeatherID.None, WeatherID.None, WeatherID.None, WeatherID.None, WeatherID.Sandstorm, WeatherID.Sandstorm,   WeatherID.None, WeatherID.None, WeatherID.Sandstorm,    WeatherID.None, WeatherID.None, WeatherID.None, WeatherID.None, WeatherID.None, WeatherID.Hail, WeatherID.None, WeatherID.None, WeatherID.None};
+    static readonly Dictionary<PokemonType, WeatherID> weatherEffectivenessChart = new Dictionary<PokemonType, WeatherID>
+    {
+        { PokemonType.Ground, WeatherID.Sandstorm },
+        { PokemonType.Rock, WeatherID.Sandstorm },
+        { PokemonType.Steel, WeatherID.Sandstorm },
+        { PokemonType.Ice, WeatherID.Hail }
+    };
+
     public static WeatherID GetWeatherEffectiveness(PokemonType defenseType)
     {
-        if (defenseType == PokemonType.None)
-            return WeatherID.None;
-
-        int col = (int)defenseType - 1;
-
-        return weathersImmunityChart[col];
+        if (weatherEffectivenessChart.TryGetValue(defenseType, out var weatherID))
+            return weatherID;
+        
+        return WeatherID.None;
     }
 }
     

@@ -62,11 +62,7 @@ public class SwitchingPokemonState : BattleStateBase
     {
         if (AbilityManager.Instance.OnPokemonEnterBattle(source, target))
         {
-            battleSystem.UIBattleManager.AbilityBox.PlayAbilityEnterAnimation(source.Base.Ability.Name);
-            yield return battleSystem.UIBattleManager.AttackDelay;
-            yield return battleSystem.UIBattleManager.ShowStatusChanges(target);
-            yield return battleSystem.UIBattleManager.AttackDelay;
-            battleSystem.UIBattleManager.AbilityBox.PlayAbilityExitAnimation();
+            yield return battleSystem.UIBattleManager.DisplayAbilityBoxMessage(source.Base.Ability.Name, source, target);
         }
     }
 }

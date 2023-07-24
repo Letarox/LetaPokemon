@@ -97,7 +97,7 @@ public class RunningTurnState : BattleStateBase
         battleSystem.TurnOrder.Add(battleSystem.UIBattleManager.ActivePlayerUnit);
         battleSystem.TurnOrder.Add(battleSystem.UIBattleManager.ActiveEnemyUnit);
         battleSystem.TurnOrder = SortedPokemonByTurnOrder(battleSystem.TurnOrder);
-        foreach(BattleUnit unit in battleSystem.TurnOrder)
+        foreach(var unit in battleSystem.TurnOrder)
         {
             if(unit.Pokemon.HP > 0)
             {
@@ -172,7 +172,7 @@ public class RunningTurnState : BattleStateBase
             yield return battleSystem.UIBattleManager.DialogueBox.TypeDialogue($"{ sourceUnit.Pokemon.Base.Name } { move.Base.OnCastMessage }");
 
         //check if the pokemon has hit its target
-        if (battleSystem.BattleCalculator.AccuracyCheck(move, sourceUnit.Pokemon, targetUnit.Pokemon))
+        if (battleSystem.BattleCalculator.AccuracyCheck(move, sourceUnit.Pokemon, targetUnit.Pokemon, battleSystem.WeatherManager.CurrentWeather.Id))
         {
             //if the move is Dig/Fly we play its animation and cancel the turn. If second turn, we check if the target can be damaged, and if it can, deals normal damage
             if (move.Base.TwoTurnMove && !sourceUnit.Pokemon.TwoTurnMove)
@@ -219,7 +219,7 @@ public class RunningTurnState : BattleStateBase
             //checks if the move used has secondary effects and the target survived the damage dealt. Apply all secondary effects from the move
             if (move.Base.SecondaryEffects != null && move.Base.SecondaryEffects.Count > 0 && targetUnit.Pokemon.HP > 0)
             {
-                foreach (SecondaryEffects secondary in move.Base.SecondaryEffects)
+                foreach (var secondary in move.Base.SecondaryEffects)
                 {
                     if (UnityEngine.Random.Range(1, 101) <= secondary.ProcChance)
                     {
@@ -272,7 +272,7 @@ public class RunningTurnState : BattleStateBase
             yield return ScreenMove(effects, sourceUnit);
         }
 
-        if (effects.Flinch && AbilityManager.Instance.OnFlinch(target))
+        if (effects.Flinch && AbilityManager.Instance.OnFlinch(sourceUnit.Pokemon, target))
         {
             target.Flinched = true;
         }
@@ -318,7 +318,17 @@ public class RunningTurnState : BattleStateBase
     IEnumerator ApplyContact(Pokemon source, Pokemon target)
     {
         //check if any pokemon has contact effects and apply such
-        AbilityManager.Instance.OnContactCheck(source, target);
+        if(AbilityManager.Instance.OnMakingContact(source, target))
+        {
+            yield return battleSystem.UIBattleManager.DisplayAbilityBoxMessage(source.Base.Ability.Name, source, target);
+        }
+
+        if(AbilityManager.Instance.OnReceivingContact(source, target))
+        {
+            yield return battleSystem.UIBattleManager.DisplayAbilityBoxMessage(target.Base.Ability.Name, target, source);
+        }
+
+        //check if there was a status change in any pokemon due to contact and display the message
         if (target.StatusChanges.Count > 0)
             yield return battleSystem.UIBattleManager.ShowStatusChanges(target);
         if (source.StatusChanges.Count > 0)
@@ -336,9 +346,9 @@ public class RunningTurnState : BattleStateBase
     {
         if (moveTarget == MoveTarget.Foe)
         {
-            foreach (StatBoost statBoost in effects.Boosts)
+            foreach (var statBoost in effects.Boosts)
             {
-                if (AbilityManager.Instance.CanReceiveBoost(statBoost, target))
+                if (AbilityManager.Instance.CanReceiveBoost(statBoost, source, target))
                 {
                     target.ApplyBoost(statBoost);
                     yield return battleSystem.UIBattleManager.ShowStatusChanges(target);
@@ -347,7 +357,7 @@ public class RunningTurnState : BattleStateBase
         }
         else
         {
-            foreach (StatBoost statBoost in effects.Boosts)
+            foreach (var statBoost in effects.Boosts)
             {
                 source.ApplyBoost(statBoost);
                 yield return battleSystem.UIBattleManager.ShowStatusChanges(source);

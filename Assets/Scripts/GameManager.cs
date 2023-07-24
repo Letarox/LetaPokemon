@@ -45,14 +45,6 @@ public class GameManager : MonoBehaviour
         };
     }
 
-    void Awake()
-    {
-        AbilityDB.Init();
-        ConditionDB.Init();
-        ScreenDB.Init();
-        WeatherDB.Init();
-    }
-
     void StartBattle()
     {
         gameState = GameState.InBattle;

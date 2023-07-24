@@ -8,7 +8,7 @@ public enum BattleAction { Move, SwitchPokemon, UseItem, Run }
 public class Team
 {
     List<Screen> _screenList = new List<Screen>();
-    public List<Screen> TeamScreens { get { return _screenList; } set { } }
+    public List<Screen> TeamScreens { get { return _screenList; } set { _screenList = value; } }
 }
 public class BattleSystem : MonoBehaviour
 {
@@ -30,13 +30,13 @@ public class BattleSystem : MonoBehaviour
     Team _playerTeam = new Team();
     Team _enemyTeam = new Team();
 
-    private Dictionary<BattleState, BattleStateBase> _stateDictionary;
-    private PartyScreenState _partyScreenState;
-    private SwitchingPokemonState _busyState;
-    private BattleOverState _battleOverState;
-    private RunningTurnState _runningTurnState;
-    private List<BattleUnit> _turnOrder;
-    private List<BattleUnit> _activePokemon;
+    Dictionary<BattleState, BattleStateBase> _stateDictionary;
+    SwitchingPokemonState _busyState;
+    BattleOverState _battleOverState;
+    RunningTurnState _runningTurnState;
+    AfterTurnState _afterTurnState;
+    List<BattleUnit> _turnOrder;
+    List<BattleUnit> _activePokemon;
     public UIBattleManager UIBattleManager => _uiBattleManager;
     public WeatherManager WeatherManager => _weatherManager;
     public BattleCalculator BattleCalculator => _battleCalculator;
@@ -54,8 +54,8 @@ public class BattleSystem : MonoBehaviour
     public List<BattleUnit> ActivePokemon { get { return _activePokemon; } set { _activePokemon = value; } }
     void Start()
     {
-        _partyScreenState = new PartyScreenState(this);
         _runningTurnState = new RunningTurnState(this);
+        _afterTurnState = new AfterTurnState(this);
         _busyState = new SwitchingPokemonState(this);
         _battleOverState = new BattleOverState(this);
         _turnOrder = new List<BattleUnit>();
@@ -119,11 +119,27 @@ public class BattleSystem : MonoBehaviour
         yield return _uiBattleManager.DialogueBox.TypeDialogue($"A wild { _uiBattleManager.ActiveEnemyUnit.Pokemon.Base.Name } appeared.");
         yield return _uiBattleManager.FaintDelay;
         yield return _weatherManager.SetInitialWeather(environmentWeather);
-        yield return _busyState.PokemonSwitchAbility(_uiBattleManager.ActivePlayerUnit.Pokemon, _uiBattleManager.ActiveEnemyUnit.Pokemon);
-        yield return _busyState.PokemonSwitchAbility(_uiBattleManager.ActiveEnemyUnit.Pokemon, _uiBattleManager.ActivePlayerUnit.Pokemon);
-
+        yield return InitialSkillsSetup(_uiBattleManager.ActivePlayerUnit, _uiBattleManager.ActiveEnemyUnit);
         TransitionToState(BattleState.ActionSelection);
     }
+
+    IEnumerator InitialSkillsSetup(BattleUnit playerUnit, BattleUnit enemyUnit)
+    {
+        _activePokemon.Add(playerUnit);
+        _activePokemon.Add(enemyUnit);
+        _activePokemon = _afterTurnState.SortedPokemonBySpeed(_activePokemon);
+
+        foreach (var unit in _activePokemon)
+        {
+            if (unit.IsPlayerTeam)
+                yield return _busyState.PokemonSwitchAbility(playerUnit.Pokemon, enemyUnit.Pokemon);
+            else
+                yield return _busyState.PokemonSwitchAbility(enemyUnit.Pokemon, playerUnit.Pokemon);
+        }
+
+        _activePokemon.Clear();
+    }
+
     public void HandleUpdate()
     {
         //Based on which state the battle is currently on, we handle which selection the player can make
@@ -159,7 +175,7 @@ public class BattleSystem : MonoBehaviour
     {
         if (_playerTeam.TeamScreens.Count > 0)
         {
-            foreach (Screen screen in _playerTeam.TeamScreens)
+            foreach (var screen in _playerTeam.TeamScreens)
             {
                 screen.Duration--;
                 if (screen.Duration == 0)
@@ -173,7 +189,7 @@ public class BattleSystem : MonoBehaviour
         //check if the enemy has any screen and run its dialogue
         if (_enemyTeam.TeamScreens.Count > 0)
         {
-            foreach (Screen screen in _enemyTeam.TeamScreens)
+            foreach (var screen in _enemyTeam.TeamScreens)
             {
                 screen.Duration--;
                 if (screen.Duration == 0)

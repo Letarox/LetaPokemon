@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+public enum NPCState { Idle, Walking, Dialogue }
 public class NPCController : MonoBehaviour, Interactable
 {
     [SerializeField] Dialogue _dialogue;
@@ -20,11 +21,12 @@ public class NPCController : MonoBehaviour, Interactable
             Debug.LogError("Character is NULL on " + transform.name);
 
     }
-    public void Interact()
+    public void Interact(Transform initiator)
     {
         if (_state == NPCState.Idle)
         {
             _state = NPCState.Dialogue;
+            _character.LookTorwards(initiator.position);
             StartCoroutine(DialogueManager.Instance.ShowDialogue(_dialogue, () => 
             {
                 _idleTimer = 0f;
@@ -57,10 +59,12 @@ public class NPCController : MonoBehaviour, Interactable
     IEnumerator Walk()
     {
         _state = NPCState.Walking;
+
+        Vector3 oldPos = transform.position;
         yield return _character.ApplyMovement(_movementPattern[_currentPattern]);
-        _currentPattern = (_currentPattern + 1) % _movementPattern.Count;
+        if(transform.position != oldPos)
+            _currentPattern = (_currentPattern + 1) % _movementPattern.Count;
+
         _state = NPCState.Idle;
     }
 }
-
-public enum NPCState { Idle, Walking, Dialogue }

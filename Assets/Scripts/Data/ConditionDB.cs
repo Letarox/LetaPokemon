@@ -4,19 +4,13 @@ using UnityEngine;
 
 public class ConditionDB
 {
-    public static void Init()
+    static readonly Dictionary<ConditionID, Condition> _conditions;
+    public static IReadOnlyDictionary<ConditionID, Condition> Conditions => _conditions;
+    static ConditionDB()
     {
-        foreach(KeyValuePair<ConditionID, Condition> keyValuePair in Conditions)
+        _conditions = new Dictionary<ConditionID, Condition>()
         {
-            ConditionID conditionId = keyValuePair.Key;
-            Condition condition = keyValuePair.Value;
-
-            condition.Id = conditionId;
-        }
-    }
-    public static Dictionary<ConditionID, Condition> Conditions { get; set; } = new Dictionary<ConditionID, Condition>()
-    {
-        {
+            {
             ConditionID.None,
             new Condition()
             {
@@ -29,7 +23,7 @@ public class ConditionDB
             {
                 Name = "Poison",
                 StartMessage = "was poisoned.",
-                OnAfterTurn = (Pokemon pokemon) => 
+                OnAfterTurn = (Pokemon pokemon) =>
                 {
                     pokemon.UpdateHP(Mathf.RoundToInt(Mathf.Clamp(pokemon.MaxHp / 8, 1, pokemon.MaxHp)));
                     pokemon.StatusChanges.Enqueue($"{ pokemon.Base.Name } is hurt by poison!");
@@ -59,7 +53,7 @@ public class ConditionDB
                 {
                     if(Random.Range(1,101) <= 25)
                     {
-                        pokemon.StatusChanges.Enqueue($"{ pokemon.Base.Name } is paralyzed! It can't move!");                        
+                        pokemon.StatusChanges.Enqueue($"{ pokemon.Base.Name } is paralyzed! It can't move!");
                         return pokemon.CanAttack = false;;
                     }
                     return pokemon.CanAttack = true;
@@ -78,9 +72,9 @@ public class ConditionDB
                     if(Random.Range(1,11) <= 2)
                     {
                         pokemon.CureStatus();
-                        pokemon.StatusChanges.Enqueue($"{ pokemon.Base.Name } is frozen no more!");                        
+                        pokemon.StatusChanges.Enqueue($"{ pokemon.Base.Name } is frozen no more!");
                         return pokemon.CanAttack = true;
-                    }                    
+                    }
                     pokemon.StatusChanges.Enqueue($"{ pokemon.Base.Name } is frozen solid!");
                     return pokemon.CanAttack = false;;
                 }
@@ -103,10 +97,10 @@ public class ConditionDB
                     if(pokemon.StatusTime <= 0)
                     {
                         pokemon.CureStatus();
-                        pokemon.StatusChanges.Enqueue($"{ pokemon.Base.Name } woke up!");                        
+                        pokemon.StatusChanges.Enqueue($"{ pokemon.Base.Name } woke up!");
                         return pokemon.CanAttack = true;;
-                    }                    
-                    pokemon.StatusTime--;   
+                    }
+                    pokemon.StatusTime--;
                     pokemon.StatusChanges.Enqueue($"{ pokemon.Base.Name } is fast asleep!");
                     return pokemon.CanAttack = false;
                 }
@@ -145,7 +139,7 @@ public class ConditionDB
                         return true;
 
                     pokemon.StatusChanges.Enqueue($"{ pokemon.Base.Name } it hurt itself in its confusion!");
-                    pokemon.UpdateHP(pokemon.TakeConfusionDamage());                    
+                    pokemon.UpdateHP(pokemon.TakeConfusionDamage());
                     return false;
                 }
             }
@@ -166,7 +160,13 @@ public class ConditionDB
                 StartMessage = "can't escape now!"
             }
         }
-    };
+        };
+
+        foreach (var conditionPair in _conditions)
+        {
+            conditionPair.Value.Id = conditionPair.Key;
+        }
+    }
 }
 
 public enum ConditionID 

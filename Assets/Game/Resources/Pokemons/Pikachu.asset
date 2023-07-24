@@ -19,7 +19,7 @@ MonoBehaviour:
   backSprite: {fileID: 21300000, guid: b21cbfcb52b5fc94681627ec92e8de16, type: 3}
   primaryType: 13
   secondaryType: 0
-  ability: 5
+  ability: 4
   maxHp: 35
   attack: 55
   defense: 40

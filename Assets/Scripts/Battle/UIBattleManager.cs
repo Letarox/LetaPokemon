@@ -85,10 +85,11 @@ public class UIBattleManager : MonoBehaviour
 
     public IEnumerator WeatherDamageText(BattleUnit unit)
     {
+        //calls the damage text from weather effects
         yield return StartCoroutine(ShowStatusChanges(unit.Pokemon));
-        yield return WeatherDelay;
+        yield return _weatherDelay;
         unit.PlayHitAnimation();
-        yield return WeatherDelay;
+        yield return _weatherDelay;
         yield return StartCoroutine(unit.Hud.UpdateLoseHP());
         yield return _battleSystem.CheckForFaint(unit);
     }
@@ -103,8 +104,20 @@ public class UIBattleManager : MonoBehaviour
         }
     }
 
+    public IEnumerator DisplayAbilityBoxMessage(string ability, Pokemon source, Pokemon target)
+    {
+        //shows the ability box with the ability that was passed as parameter
+        _abilityBox.PlayAbilityEnterAnimation(ability);
+        yield return _attackDelay;
+        yield return ShowStatusChanges(source);
+        yield return ShowStatusChanges(target);
+        yield return _attackDelay;
+        _abilityBox.PlayAbilityExitAnimation();
+    }
+
     public void BattleOver(bool won)
     {
+        //unsubscribe the events from the weather manager and battleover
         _battleSystem.WeatherManager.OnWeatherChange -= UpdateWeatherImage;
         _battleSystem.WeatherManager.OnWeatherStartFinish -= WeatherStartFinishText;
         _battleSystem.WeatherManager.OnWeatherDamage -= WeatherDamageText;

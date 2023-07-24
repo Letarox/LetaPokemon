@@ -10,12 +10,12 @@ public class AbilityManager : MonoSingleton<AbilityManager>
     {
         _weatherManager = weatherManager;
     }
-    public bool CanReceiveBoost(StatBoost statBoost, Pokemon pokemon)
+    public bool CanReceiveBoost(StatBoost statBoost, Pokemon source, Pokemon target)
     {
         //check if the target has an ability with OnStatsChange and if it does, allows the ability to check if the current stat can be changed
-        if (pokemon.Base?.Ability?.OnStatsChange != null)
+        if (target.Base?.Ability?.OnStatsChange != null)
         {
-            return pokemon.Base.Ability.OnStatsChange(statBoost, pokemon);
+            return target.Base.Ability.OnStatsChange(statBoost, source, target);
         }
 
         return true;
@@ -39,12 +39,12 @@ public class AbilityManager : MonoSingleton<AbilityManager>
         }
         return 1f;
     }
-    public float OnEvasionCheck(Pokemon pokemon)
+    public float OnEvasionCheck(Pokemon source, Pokemon target, WeatherID weatherID)
     {
         //if the pokemon ability has OnAccuracyCheck, runs it, otherwise returns 1f
-        if (pokemon.Base?.Ability?.OnEvasionCheck != null)
+        if (target.Base?.Ability?.OnEvasionCheck != null)
         {
-            return pokemon.Base.Ability.OnEvasionCheck(pokemon);
+            return target.Base.Ability.OnEvasionCheck(source, target, weatherID);
         }
         return 1f;
     }
@@ -54,33 +54,38 @@ public class AbilityManager : MonoSingleton<AbilityManager>
         //if the pokemon ability has OnAccuracyCheck, runs it, otherwise returns 1f
         if (source.Base?.Ability?.OnPokemonEnterBattle != null)
         {
-            source.Base.Ability.OnPokemonEnterBattle(target);
+            source.Base.Ability.OnPokemonEnterBattle(source, target);
             return true;
         }
         return false;
     }
 
-    public bool OnFlinch(Pokemon pokemon)
+    public bool OnFlinch(Pokemon source, Pokemon target)
     {
-        if(pokemon.Base?.Ability?.OnFlinch != null)
+        if(target.Base?.Ability?.OnFlinch != null)
         {
-            return pokemon.Base.Ability.OnFlinch(pokemon);
+            return target.Base.Ability.OnFlinch(source, target);
         }
         return true;
     }
 
-    public void OnContactCheck(Pokemon attacker, Pokemon defender)
+    public bool OnMakingContact(Pokemon attacker, Pokemon defender)
     {
         //checks if the attacking pokemon has OnMakingContact to apply its effects
         if (attacker.Base?.Ability?.OnMakingContact != null)
         {
-            attacker.Base.Ability.OnMakingContact(defender);
+            return attacker.Base.Ability.OnMakingContact(defender);
         }
+        return false;
+    }
 
+    public bool OnReceivingContact(Pokemon attacker, Pokemon defender)
+    {       
         //Check if the defending pokemon has OnReceivingContact to apply its effects
         if (defender.Base?.Ability?.OnReceivingContact != null)
         {
-            defender.Base.Ability.OnReceivingContact(attacker);
+            return defender.Base.Ability.OnReceivingContact(attacker);
         }
+        return false;
     }
 }

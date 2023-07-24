@@ -32,7 +32,7 @@ public class Character : MonoBehaviour
         targetPos.x += moveVec.x;
         targetPos.y += moveVec.y;
 
-        if (!IsWalkable(targetPos))
+        if (!IsPathClear(targetPos))
             yield break;
         //turn our bool to true to make sure we can't receive further player input
         IsMoving = true;
@@ -52,12 +52,24 @@ public class Character : MonoBehaviour
 
         OnMoveOver?.Invoke();
     }
-    bool IsWalkable(Vector3 targetPos)
+    bool IsPathClear(Vector3 targetPos)
     {
-        //check if the next tile we are going to move is from the SolidObjectsLayer
-        if (Physics2D.OverlapCircle(targetPos, 0.2f, GameLayers.Instance.SolidObjectsLayer | GameLayers.Instance.InteractableLayer) != null)
+        Vector3 diff = targetPos - transform.position;
+        Vector3 dir = diff.normalized;
+        if (Physics2D.BoxCast(transform.position + dir, new Vector2(0.2f, 0.2f), 0f, dir, diff.magnitude - 1, GameLayers.Instance.SolidObjectsLayer | GameLayers.Instance.InteractableLayer | GameLayers.Instance.PlayerLayer))
             return false;
 
         return true;
+    }
+    public void LookTorwards(Vector3 targetPos)
+    {
+        float diffX = Mathf.Floor(targetPos.x) - Mathf.Floor(transform.position.x);
+        float diffY = Mathf.Floor(targetPos.y) - Mathf.Floor(transform.position.y);
+
+        if (diffX == 0f || diffY == 0f)
+        {
+            _animator.MoveX = Math.Clamp(diffX, -1f, 1f);
+            _animator.MoveY = Math.Clamp(diffY, -1f, 1f);
+        }
     }
 }

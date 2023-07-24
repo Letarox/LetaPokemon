@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
-    <LangVersion>latest</LangVersion>
+    <LangVersion>8.0</LangVersion>
   </PropertyGroup>
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -53,6 +53,10 @@
     <UnityVersion>2021.2.10f1</UnityVersion>
   </PropertyGroup>
   <ItemGroup>
+    <Analyzer Include="C:\Program Files (x86)\Microsoft Visual Studio Tools for Unity\16.0\Analyzers\Microsoft.Unity.Analyzers.dll" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Assets\Scripts\Battle\Weather\WeatherManager.cs" />
     <Compile Include="Assets\Scripts\Battle\PartyMemberUI.cs" />
     <Compile Include="Assets\Scripts\Battle\BattleState\AfterTurnState.cs" />
     <Compile Include="Assets\Scripts\Gameplay\Dialogue.cs" />
@@ -70,8 +74,10 @@
     <Compile Include="Assets\Scripts\Pokemons\Ability.cs" />
     <Compile Include="Assets\Scripts\Gameplay\GameLayers.cs" />
     <Compile Include="Assets\Scripts\Data\AbilityDB.cs" />
+    <Compile Include="Assets\Scripts\Battle\AbilityManager.cs" />
     <Compile Include="Assets\Scripts\Battle\BattleDialogueBox.cs" />
     <Compile Include="Assets\Scripts\Battle\Weather\Weather.cs" />
+    <Compile Include="Assets\Scripts\Battle\UIBattleManager.cs" />
     <Compile Include="Assets\Scripts\Battle\BattleState\BattleStateBase.cs" />
     <Compile Include="Assets\Scripts\Battle\BattleState\BattleOverState.cs" />
     <Compile Include="Assets\Scripts\Battle\BattleState\SwitchingPokemonState.cs" />
@@ -85,6 +91,7 @@
     <Compile Include="Assets\Scripts\Pokemons\Pokemon.cs" />
     <Compile Include="Assets\Scripts\Util\MonoSingleton.cs" />
     <Compile Include="Assets\Scripts\Battle\BattleUnit.cs" />
+    <Compile Include="Assets\Scripts\Battle\BattleCalculator.cs" />
     <Compile Include="Assets\Scripts\Battle\PartyScreen.cs" />
     <Compile Include="Assets\Scripts\Gameplay\Interactable.cs" />
     <Compile Include="Assets\Scripts\Battle\BattleState\MoveSelectionState.cs" />
@@ -94,10 +101,6 @@
     <Compile Include="Assets\Scripts\Data\ScreenDB.cs" />
     <Compile Include="Assets\Scripts\Pokemons\Condition.cs" />
     <Compile Include="Assets\Scripts\Gameplay\DialogueManager.cs" />
-    <Compile Include="Assets\Scripts\Battle\Weather\WeatherManager.cs" />
-    <Compile Include="Assets\Scripts\Battle\AbilityManager.cs" />
-    <Compile Include="Assets\Scripts\Battle\BattleCalculator.cs" />
-    <Compile Include="Assets\Scripts\Battle\UIBattleManager.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\TextMesh Pro\Shaders\TMPro.cginc" />

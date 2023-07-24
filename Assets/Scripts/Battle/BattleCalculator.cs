@@ -22,7 +22,7 @@ public class BattleCalculator
                 return 0;
         }
     }
-    public bool AccuracyCheck(Move move, Pokemon source, Pokemon target)
+    public bool AccuracyCheck(Move move, Pokemon source, Pokemon target, WeatherID weatherID)
     {
         //check if the move is being used on self
         if (move.Base.Category == MoveCategory.Status && move.Base.Target == MoveTarget.Self)
@@ -34,21 +34,21 @@ public class BattleCalculator
         if (move.Base.BypassAccuracy)
             return true;
         //Generates a random float number between 1 and 100, multiplying by the accuracy of the move and accuracy of the pokemon, applying the stat changes.
-        //Clamps the accuracy to at least 33% of the move accuracy, and maximum of 3x its accuracy
-        return (UnityEngine.Random.Range(1.00f, 100.00f) <= Math.Clamp(move.Base.Accuracy * source.Accuracy * target.Evasion * AbilityManager.Instance.OnAccuracyCheck(source) * AbilityManager.Instance.OnEvasionCheck(target), move.Base.Accuracy * 0.33f, move.Base.Accuracy * 3f)) ? true : false;
+        //Clamps the accuracy to at least 33% accuracy, and maximum of 3x its accuracy
+        return (UnityEngine.Random.Range(1.00f, 100.00f) <= Math.Clamp(move.Base.Accuracy * source.Accuracy * target.Evasion * AbilityManager.Instance.OnAccuracyCheck(source) * AbilityManager.Instance.OnEvasionCheck(source, target, weatherID), 33f, move.Base.Accuracy * 3f)) ? true : false;
     }
-    public int DamageCalculation(Move move, Pokemon attacker, Pokemon defender, WeatherID weatherId, DamageDetails damageDetails, List<Screen> screens = null)
+    public int DamageCalculation(Move move, Pokemon attacker, Pokemon defender, WeatherID weatherID, DamageDetails damageDetails, List<Screen> screens = null)
     {
         //Applies the whole formula of damage, calculating all instances that can impact the outcome of the damage
         float stab = (attacker.Base.PrimaryType == move.Base.Type || attacker.Base.SecondaryType == move.Base.Type) ? 1.5f : 1f;
         float burn = (move.Base.Category == MoveCategory.Physical && attacker.Status == ConditionDB.Conditions[ConditionID.BRN] && attacker.Base.Ability.Id != AbilityID.Guts) ? 0.5f : 1f;
         float abilities = AbilityManager.Instance.OnDamageCheck(attacker, move);
-        float weather = ((move.Base.Type == PokemonType.Fire && weatherId == WeatherID.Sunny) || (move.Base.Type == PokemonType.Water && weatherId == WeatherID.Rain)) ? 1.5f :
-            ((move.Base.Type == PokemonType.Fire && weatherId == WeatherID.Rain) || (move.Base.Type == PokemonType.Water && weatherId == WeatherID.Sunny)) ? 0.5f : 1f;
+        float weather = ((move.Base.Type == PokemonType.Fire && weatherID == WeatherID.Sunny) || (move.Base.Type == PokemonType.Water && weatherID == WeatherID.Rain)) ? 1.5f :
+            ((move.Base.Type == PokemonType.Fire && weatherID == WeatherID.Rain) || (move.Base.Type == PokemonType.Water && weatherID == WeatherID.Sunny)) ? 0.5f : 1f;
         float screen = (move.Base.Category == MoveCategory.Physical) ?
-            screens.Exists(obj => obj.Id == ScreenType.Reflect || obj.Id == ScreenType.AuroraVeil) ?
+            screens.Exists(obj => obj.Id == ScreenType.Reflect || obj.Id == ScreenType.AuroraVeil && damageDetails.Critical == 1f) ?
                 0.5f : 1f :
-            screens.Exists(obj => obj.Id == ScreenType.LightScreen || obj.Id == ScreenType.AuroraVeil) ?
+            screens.Exists(obj => obj.Id == ScreenType.LightScreen || obj.Id == ScreenType.AuroraVeil && damageDetails.Critical == 1f) ?
                 0.5f : 1f;
         float modifiers = UnityEngine.Random.Range(0.85f, 1f) * damageDetails.TypeEffectiveness * damageDetails.Critical * stab * burn * abilities * weather * screen;
         int offense = (move.Base.Category == MoveCategory.Physical) ?
@@ -62,10 +62,10 @@ public class BattleCalculator
             (damageDetails.Critical > 1f) ?
                 RunCriticalCalculation(Stat.SpDefense, defender) : defender.SpecialDefense;
         defense *= Mathf.FloorToInt((move.Base.Category == MoveCategory.Physical) ?
-            ((defender.Base.PrimaryType == PokemonType.Ice || defender.Base.SecondaryType == PokemonType.Ice) && weatherId == WeatherID.Hail) ? 1.5f : 1f :
-            ((defender.Base.PrimaryType == PokemonType.Rock || defender.Base.SecondaryType == PokemonType.Rock) && weatherId == WeatherID.Sandstorm) ? 1.5f : 1f);
+            ((defender.Base.PrimaryType == PokemonType.Ice || defender.Base.SecondaryType == PokemonType.Ice) && weatherID == WeatherID.Hail) ? 1.5f : 1f :
+            ((defender.Base.PrimaryType == PokemonType.Rock || defender.Base.SecondaryType == PokemonType.Rock) && weatherID == WeatherID.Sandstorm) ? 1.5f : 1f);
         int baseDamage = (((2 * attacker.Level / 5) + 2) * move.Base.Power * offense / defense) / 50 + 2;
-        int damage = Mathf.FloorToInt(baseDamage * modifiers);
+        int damage = Math.Clamp(Mathf.FloorToInt(baseDamage * modifiers), 1, defender.MaxHp);
         return damage;
     }
     public DamageDetails ApplyDamage(Move move, Pokemon attacker, Pokemon defender, WeatherID weatherId, List<Screen> screens = null)
@@ -80,10 +80,9 @@ public class BattleCalculator
         //if struggle damages the attacker for a 1/4 of their health
         if (move.Base.Name == "Struggle")
         {
-            attacker.UpdateHP(Mathf.FloorToInt(attacker.MaxHp / 4));
+            attacker.UpdateHP(Mathf.RoundToInt(attacker.MaxHp / 4));
             attacker.StatusChanges.Enqueue($"{ attacker.Base.Name } is damaged by recoil!");
         }
-           
 
         //if the move is a HP Draining Move, apply the amount of health to be restored and adds the message to be displayed
         if (move.Base.HPDrainingMove)
